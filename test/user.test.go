@@ -7,8 +7,16 @@ import "errors"
 
 type Meeting = string
 
+type Identifier string
+
+var emptyIdentifier = *new(Identifier)
+
+func (n Identifier) Empty() bool {
+	return n == emptyIdentifier
+}
+
 var (
-    ErrNeedImplement = errors.New("This function need to be implemented.")
+	ErrNeedImplement = errors.New("This function need to be implemented.")
 
 	ErrNilUser      = errors.New("A nil user/*user is to be used.")
 	ErrExistedUser  = errors.New("The user has been existed.")
@@ -37,16 +45,11 @@ func (e *AgendaError) Error() string {
 //
 //
 
-type Username string
-
-var emptyUsername = *new(Username)
-
-func (n Username) Empty() bool {
-	return n == emptyUsername
-}
+// CHECK: how to let type Username diff MeetingTitle
+type Username = Identifier
 
 type UserInfo struct {
-	Name  Username
+	Name Username
 	// Auth  auth.Auth
 	Mail  string
 	Phone string
@@ -115,8 +118,8 @@ const (
 	return &UserList{Users: users}
 } */
 func NewUserList() *UserList {
-    ul := new(UserList)
-    ul.Users = make(map[Username](*User))
+	ul := new(UserList)
+	ul.Users = make(map[Username](*User))
 	return ul
 }
 
@@ -127,7 +130,7 @@ func (ul UserList) Size() int {
 func (ul *UserList) Get(name Username) *User {
 	return ul.Users[name] // NOTE: if directly return accessed result from a map like this, would not get the (automatical) `ok`
 }
-func (ul UserList) Exist(name Username) bool {
+func (ul UserList) Contains(name Username) bool {
 	u := ul.Get(name)
 	return u != nil
 }
@@ -137,7 +140,7 @@ func (ul *UserList) Add(user *User) error {
 		return ErrNilUser
 	}
 	name := user.Name
-	if ul.Exist(name) {
+	if ul.Contains(name) {
 		return ErrExistedUser
 	}
 	ul.Users[name] = user
@@ -148,7 +151,7 @@ func (ul *UserList) Remove(user *User) error {
 		return ErrNilUser
 	}
 	name := user.Name
-	if ul.Exist(name) {
+	if ul.Contains(name) {
 		delete(ul.Users, name) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
@@ -201,40 +204,39 @@ func (ul *UserList) ForEach(fn interface{}) error {
 	return nil
 }
 
-
 var (
-    counter  = 0
+	counter = 0
 )
 
 func count() {
-    counter += 1
+	counter += 1
 }
 
 func main() {
-    ul := NewUserList()
-    // ul.Users["a"] = NewUser(UserInfo{"a", "a", "a"})
-    ul.Users["a"] = NewUser(UserInfo{})
-    ul.Users["aa"] = NewUser(UserInfo{"aa", "aa", "aa"})
-    ul.Users["b"] = NewUser(UserInfo{"b", "b", "b"})
-    ul.Users["bb"] = NewUser(UserInfo{"bb", "bb", "bb"})
+	ul := NewUserList()
+	// ul.Users["a"] = NewUser(UserInfo{"a", "a", "a"})
+	ul.Users["a"] = NewUser(UserInfo{})
+	ul.Users["aa"] = NewUser(UserInfo{"aa", "aa", "aa"})
+	ul.Users["b"] = NewUser(UserInfo{"b", "b", "b"})
+	ul.Users["bb"] = NewUser(UserInfo{"bb", "bb", "bb"})
 
-    if err := ul.ForEach(func(key Username)(error) {
-        println(key, ul.Users[key])
-        defer count()
-        return nil
-    }); err != nil {
-        panic(err)
-    }
+	if err := ul.ForEach(func(key Username) error {
+		println(key, ul.Users[key])
+		defer count()
+		return nil
+	}); err != nil {
+		panic(err)
+	}
 
-    println(ul.Size())
-{
-    u := ul.Get("bb")
-    println(u)
+	println(ul.Size())
+	{
+		u := ul.Get("bb")
+		println(u)
 
-    println(ul.Size())
-}
-    u, _ := ul.PickOut("bb")
-    println(u)
+		println(ul.Size())
+	}
+	u, _ := ul.PickOut("bb")
+	println(u)
 
-    println(ul.Size())
+	println(ul.Size())
 }

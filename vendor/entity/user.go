@@ -3,15 +3,10 @@ package entity
 import (
 	"auth"
 	"fmt"
+	"util"
 )
 
-type Username string
-
-var emptyUsername = *new(Username)
-
-func (n Username) Empty() bool {
-	return n == emptyUsername
-}
+type Username = util.Identifier
 
 type UserInfo struct {
 	Name  Username
@@ -95,7 +90,7 @@ func (ul UserList) Size() int {
 func (ul *UserList) Get(name Username) *User {
 	return ul.Users[name] // NOTE: if directly return accessed result from a map like this, would not get the (automatical) `ok`
 }
-func (ul UserList) Exist(name Username) bool {
+func (ul UserList) Contains(name Username) bool {
 	u := ul.Get(name)
 	return u != nil
 }
@@ -105,7 +100,7 @@ func (ul *UserList) Add(user *User) error {
 		return ErrNilUser
 	}
 	name := user.Name
-	if ul.Exist(name) {
+	if ul.Contains(name) {
 		return ErrExistedUser
 	}
 	ul.Users[name] = user
@@ -116,7 +111,7 @@ func (ul *UserList) Remove(user *User) error {
 		return ErrNilUser
 	}
 	name := user.Name
-	if ul.Exist(name) {
+	if ul.Contains(name) {
 		delete(ul.Users, name) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
