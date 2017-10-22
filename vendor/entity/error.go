@@ -1,0 +1,29 @@
+package entity
+
+import "errors"
+
+const (
+	ErrNeedImplement = errors.New("This function need to be implemented.")
+
+	ErrNilUser      = errors.New("A nil user/*user is to be used.")
+	ErrExistedUser  = errors.New("The user has been existed.")
+	ErrUserNotFound = errors.New("Cannot find the user.")
+
+	ErrEmptyUsername = errors.New("Given username cannot be empty.")
+	// Err
+	// Err
+)
+
+type AgendaError struct {
+	msg string
+}
+
+func NewAgendaError(msg string) *AgendaError {
+	return &AgendaError{
+		msg: msg,
+	}
+}
+
+func (e *AgendaError) Error() string {
+	return e.message
+}

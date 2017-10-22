@@ -1,0 +1,28 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.associations": {
+        "*.binly.log": "log",
+        "*.binlylog": "log",
+        "*.binlynote": "log",
+        "*.gitcommit.log": "git-commit",
+        "*.rst": "restructuredtext"
+
+        // "algorithm": "cpp",
+        // "xstring": "cpp",
+        // "cmath": "cpp",
+        // "cstdlib": "cpp",
+        // "xlocale": "cpp"
+    },
+
+    "files.defaultLanguage": "go",
+
+    "files.exclude": {
+        "dbg/*": true,
+        "dbg64/*": true,
+        "rel/*": true,
+        "rel64/*": true,
+        "relPrefast/*": true,
+        "relPrefast64/*": true,
+        "build-log.txt": true
+    }
+}
