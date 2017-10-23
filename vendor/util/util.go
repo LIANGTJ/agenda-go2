@@ -1,6 +1,16 @@
 package util
 
-import "os"
+import (
+	"log"
+	"os"
+)
+
+var (
+	Log  = log.Println
+	Logf = log.Printf
+	// Log = func(args ...interface{}) {}
+	// Logf = func(args ...interface{}) {}
+)
 
 // Params support named-paaram
 type Params = map[string](interface{})

@@ -22,6 +22,7 @@ type UserLoader struct {
 }
 
 func UserDataPath() string { return util.WorkingDir() + "user-data.json" }
+func UserTestPath() string { return util.WorkingDir() + "user-test.json" }
 
 func (loader *UserLoader) Load(ul *entity.UserList) error {
 	file, err := os.Open(UserDataPath())

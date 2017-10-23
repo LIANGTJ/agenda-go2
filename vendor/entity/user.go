@@ -7,6 +7,9 @@ import (
 	"util"
 )
 
+var LOG = util.Log
+var LOGF = util.Logf
+
 type Username = util.Identifier
 
 type UserInfo struct {
@@ -23,6 +26,8 @@ type User struct {
 func NewUser(info UserInfo) *User {
 	if info.Name.Empty() {
 		// FIXME: more elegant ?
+		// TODO: provide a ready-user that allowe to be empty to be loaded info into ?
+		log.Printf("An empty UserInfo is passed to new a User. Just return `nil`.")
 		return nil
 	}
 	u := new(User)
@@ -118,16 +123,19 @@ func DeserializeUserList(decoder Decoder) (*UserList, error) {
 }
 
 func (ul *UserList) Serialize(encoder Encoder) error {
-	return encoder.Encode(ul.toSerializable())
+	sl := ul.toSerializable()
+	// LOGF("sl: %+v\n", sl)
+	return encoder.Encode(sl)
 }
 
-// func (ul *UserList) Deserialize(decoder Decoder) error {
-//     users, err := DeserializeUserList(decoder)
-//     if err == nil {
-//         // ul <- users
-//     }
-// 	return
-// }
+// TODO:  Need in-place deserialize ?
+func (ul *UserList) Deserialize(decoder Decoder) error {
+	// users, err := DeserializeUserList(decoder)
+	// if err == nil {
+	// 	// ul <- users
+	// }
+	return ErrNeedImplement
+}
 
 func (ul UserList) Size() int {
 	return len(ul.Users)
@@ -176,7 +184,8 @@ func (ul *UserList) PickOut(name Username) (*User, error) {
 }
 
 func (ul UserList) Slice() UserListRaw {
-	users := make(UserListRaw, ul.Size()) // CHECK: diff between `len` and `cap` in golang
+	// NOTE: when make a `Slice`, the `len` value decide the position `append` to TODEL:
+	users := make(UserListRaw, 0, ul.Size())
 	for _, u := range ul.Users {
 		users = append(users, u) // CHECK: maybe better to use index in golang ?
 	}
@@ -185,8 +194,18 @@ func (ul UserList) Slice() UserListRaw {
 
 func (ul UserList) toSerializable() []UserInfo {
 	users := ul.Slice()
-	ret := make([]UserInfo, ul.Size())
+	ret := make([]UserInfo, 0, ul.Size())
+
+	// LOG("ul.Size(): ", ul.Size())
+	LOGF("toSerializable: %+v \n", users)
 	for _, u := range users {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		if u == nil {
+			log.Printf("A nil User is to be used. Just SKIP OVER it.")
+			continue
+		}
+
 		ret = append(ret, u.UserInfo)
 	}
 	return ret
