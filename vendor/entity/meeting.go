@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"log"
 	"time"
 	"util"
 )
@@ -10,15 +11,33 @@ type MeetingTitle = util.Identifier
 
 type MeetingInfo struct {
 	// ID            int
-	Title MeetingTitle
+	Title         MeetingTitle
+	Sponsor       *User
+	Participators UserList
 	// Time          time.Time
 	StartTime time.Time
 	EndTime   time.Time
 }
+type MeetingInfoSerializable struct {
+	Title         MeetingTitle
+	Sponsor       Username
+	Participators []UserInfo
+	StartTime     string // TODO:
+	EndTime       string
+}
+
+func (info MeetingInfo) toSerializable() *MeetingInfoSerializable {
+	serialInfo := new(MeetingInfoSerializable)
+	serialInfo.Title = info.Title
+	serialInfo.Sponsor = info.Sponsor.Name
+	serialInfo.Participators = info.Participators.toSerializable()
+	serialInfo.StartTime = info.StartTime.String()
+	serialInfo.EndTime = info.EndTime.String()
+	return serialInfo
+}
+
 type Meeting struct {
 	MeetingInfo
-	Sponsor       *User
-	Participators UserList
 }
 
 // TODO: abstract Meeting(List) and User(List)
@@ -31,6 +50,21 @@ func NewMeeting(info MeetingInfo) *Meeting {
 	m := new(Meeting)
 	m.MeetingInfo = info
 	return m
+}
+
+func DeserializeMeeting(decoder Decoder) (*Meeting, error) {
+	mInfo := new(MeetingInfo)
+	err := decoder.Decode(mInfo)
+	if err != nil {
+		log.Fatal(err) // FIXME:
+		return nil, err
+	}
+	meeting := NewMeeting(*mInfo)
+	return meeting, nil
+}
+
+func (m Meeting) Serialize(encoder Encoder) error {
+	return encoder.Encode(m.MeetingInfo.toSerializable())
 }
 
 // ................................................................

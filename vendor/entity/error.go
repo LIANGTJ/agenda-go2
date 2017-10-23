@@ -2,7 +2,7 @@ package entity
 
 import "errors"
 
-const (
+var (
 	ErrNeedImplement = errors.New("This function need to be implemented.")
 
 	// User
@@ -34,5 +34,5 @@ func NewAgendaError(msg string) *AgendaError {
 }
 
 func (e *AgendaError) Error() string {
-	return e.message
+	return e.msg
 }

@@ -3,6 +3,7 @@ package entity
 import (
 	"auth"
 	"fmt"
+	"log"
 	"util"
 )
 
@@ -27,6 +28,21 @@ func NewUser(info UserInfo) *User {
 	u := new(User)
 	u.UserInfo = info
 	return u
+}
+
+func DeserializeUser(decoder Decoder) (*User, error) {
+	uInfo := new(UserInfo)
+	err := decoder.Decode(uInfo)
+	if err != nil {
+		log.Fatal(err) // FIXME:
+		return nil, err
+	}
+	user := NewUser(*uInfo)
+	return user, nil
+}
+
+func (u User) Serialize(encoder Encoder) error {
+	return encoder.Encode(u.UserInfo)
 }
 
 func (u *User) CancelAccount() error {
@@ -83,6 +99,36 @@ func NewUserList() *UserList {
 	return ul
 }
 
+func DeserializeUserList(decoder Decoder) (*UserList, error) {
+	ul := NewUserList()
+	for decoder.More() {
+		uInfo := new(UserInfo)
+		err := decoder.Decode(uInfo)
+		if err != nil {
+			log.Fatal(err) // FIXME:
+			return nil, err
+		}
+		user := NewUser(*uInfo)
+		if err := ul.Add(user); err != nil {
+			log.Fatal(err)
+			return ul, err // FIXME:
+		}
+	}
+	return ul, nil
+}
+
+func (ul *UserList) Serialize(encoder Encoder) error {
+	return encoder.Encode(ul.toSerializable())
+}
+
+// func (ul *UserList) Deserialize(decoder Decoder) error {
+//     users, err := DeserializeUserList(decoder)
+//     if err == nil {
+//         // ul <- users
+//     }
+// 	return
+// }
+
 func (ul UserList) Size() int {
 	return len(ul.Users)
 }
@@ -135,6 +181,15 @@ func (ul UserList) Slice() UserListRaw {
 		users = append(users, u) // CHECK: maybe better to use index in golang ?
 	}
 	return users
+}
+
+func (ul UserList) toSerializable() []UserInfo {
+	users := ul.Slice()
+	ret := make([]UserInfo, ul.Size())
+	for _, u := range users {
+		ret = append(ret, u.UserInfo)
+	}
+	return ret
 }
 
 // func (ul *UserList) ForEach(f func(*User)) error {
