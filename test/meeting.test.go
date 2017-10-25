@@ -11,12 +11,8 @@ import (
 	"util"
 )
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-}
-
-var LOG = util.Log
-var LOGF = util.Logf
+var logln = util.Log
+var logf = util.Logf
 
 var (
 	counter = 0
@@ -27,18 +23,19 @@ func count() {
 }
 
 func main() {
-	fin, err := os.Open(model.MeetingTestPath())
+	fin, err := os.Open(model.MeetingDataPath())
 	if err != nil {
 		panic(err)
 	}
 	decoder := json.NewDecoder(fin)
 
-	u0, err := entity.DeserializeMeeting(decoder)
-	LOGF("+v: %+v\n", u0)
+	// u0 := entity.LoadedMeeting(decoder)
+	// logf("+v: %+v\n", u0)
 
-	// ml := entity.NewMeetingList()
-	ml, err := entity.DeserializeMeetingList(decoder)
-	LOGF("+v: %+v\n", ml)
+	ml := entity.NewMeetingList()
+	// ml := entity.LoadedMeetingList(decoder)
+	ml.LoadFrom(decoder)
+	logf("+v: %+v\n", ml)
 
 	t := time.Now()
 	u := entity.NewUser(entity.UserInfo{Name: "Sponsor"})
@@ -50,7 +47,7 @@ func main() {
 	ml.Add(entity.NewMeeting(entity.MeetingInfo{Title: "bb", Sponsor: u, StartTime: t.AddDate(2, 2, 2), EndTime: t}))
 
 	if err := ml.ForEach(func(key entity.MeetingTitle) error {
-		LOG(counter, key, ml.Meetings[key])
+		logln(counter, key, ml.Meetings[key])
 		defer count()
 		return nil
 	}); err != nil {
@@ -59,20 +56,20 @@ func main() {
 
 	{
 		oldSize := ml.Size()
-		m := ml.Get("bb")
-		LOGF("ml.Size(): %v ---> %v, m: %+v", oldSize, ml.Size(), m)
+		m := ml.Ref("bb")
+		logf("ml.Size(): %v ---> %v, m: %+v", oldSize, ml.Size(), m)
 	}
 	{
 		oldSize := ml.Size()
 		m, _ := ml.PickOut("bb")
-		LOGF("ml.Size(): %v ---> %v, m: %+v", oldSize, ml.Size(), m)
+		logf("ml.Size(): %v ---> %v, m: %+v", oldSize, ml.Size(), m)
 
 		fout, err := os.Create(model.MeetingTestPath())
 		if err != nil {
 			panic(err)
 		}
 		encoder := json.NewEncoder(fout)
-		m.Serialize(encoder)
+		m.Save(encoder)
 	}
 
 	// os.MkdirAll(util.WorkingDir(), 0777)
@@ -82,11 +79,11 @@ func main() {
 	}
 	encoder := json.NewEncoder(fout)
 	if encoder != nil {
-		err := ml.Serialize(encoder)
+		err := ml.Save(encoder)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
-	LOG("correct.")
+	logln("correct.")
 }

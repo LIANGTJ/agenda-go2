@@ -11,8 +11,8 @@ import (
 	"util"
 )
 
-var LOG = util.Log
-var LOGF = util.Logf
+var logln = util.Log
+var logf = util.Logf
 
 var (
 	counter = 0
@@ -23,16 +23,18 @@ func count() {
 }
 
 func main() {
-	fin, err := os.Open(model.UserTestPath())
+	fin, err := os.Open(model.UserDataPath())
 	if err != nil {
 		panic(err)
 	}
 	decoder := json.NewDecoder(fin)
 
-	// u0, err := entity.DeserializeUser(decoder)
+	// u0, err := entity.LoadedUser(decoder)
 	// fmt.Printf("+v: %+v\n", u0)
 
-	ul, err := entity.DeserializeUserList(decoder)
+	ul := entity.NewUserList()
+	// ul, err := entity.LoadedUserList(decoder)
+	ul.LoadFrom(decoder)
 	fmt.Printf("+v: %+v\n", ul)
 
 	// ul.Add(entity.NewUser(entity.UserInfo{Name: "a", Auth: "a", Mail: "a"}))
@@ -52,13 +54,13 @@ func main() {
 
 	{
 		oldSize := ul.Size()
-		u := ul.Get("bb")
-		LOGF("ul.Size(): %v ---> %v, u: %+v", oldSize, ul.Size(), u)
+		u := ul.Ref("bb")
+		logf("ul.Size(): %v ---> %v, u: %+v", oldSize, ul.Size(), u)
 	}
 	{
 		oldSize := ul.Size()
 		u, _ := ul.PickOut("bb")
-		LOGF("ul.Size(): %v ---> %v, u: %+v", oldSize, ul.Size(), u)
+		logf("ul.Size(): %v ---> %v, u: %+v", oldSize, ul.Size(), u)
 	}
 
 	// fout, err := os.Create(model.UserTestPath())
@@ -66,7 +68,7 @@ func main() {
 	// 	panic(err)
 	// }
 	// encoder := json.NewEncoder(fout)
-	// u.Serialize(encoder)
+	// u.Save(encoder)
 
 	// os.MkdirAll(util.WorkingDir(), 0777)
 	fout, err := os.Create(model.UserDataPath())
@@ -74,11 +76,8 @@ func main() {
 		log.Println(err)
 	}
 	encoder := json.NewEncoder(fout)
-	if encoder != nil {
-		err := ul.Serialize(encoder)
-		if err != nil {
-			log.Println(err)
-		}
+	if err := ul.Save(encoder); err != nil {
+		logln(err)
 	}
 
 }

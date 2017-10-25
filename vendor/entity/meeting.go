@@ -14,7 +14,7 @@ type MeetingInfo struct {
 	Title         MeetingTitle
 	Sponsor       *User
 	Participators UserList
-	// Time          time.Time
+
 	StartTime time.Time
 	EndTime   time.Time
 }
@@ -26,56 +26,61 @@ type MeetingInfoSerializable struct {
 	EndTime       string
 }
 
-const TimeLayout = time.RFC3339
+type Meeting struct {
+	MeetingInfo
+}
 
-func (info MeetingInfo) toSerializable() *MeetingInfoSerializable {
+func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 	serialInfo := new(MeetingInfoSerializable)
 
 	serialInfo.Title = info.Title
+
 	sponsor, name := info.Sponsor, util.EmptyIdentifier
 	if sponsor != nil {
 		name = sponsor.Name
 	}
 	serialInfo.Sponsor = name
-	// LOGF("mInfo.toSerializable: %+v\n", serialInfo)
-	serialInfo.Participators = info.Participators.toSerializable()
-	// us := info.Participators
-	// LOGF(".. %+v \n", us)
-	// sus := us.toSerializable()
-	// LOGF(".. %+v \n", sus)
-	// serialInfo.Participators = sus
-	// LOGF("mInfo.toSerializable: %+v\n", serialInfo)
+
+	serialInfo.Participators = info.Participators.Serialize()
+
 	serialInfo.StartTime = info.StartTime.Format(TimeLayout)
 	serialInfo.EndTime = info.EndTime.Format(TimeLayout)
+
 	return serialInfo
 }
-func (infoSerial MeetingInfoSerializable) toRegular() *MeetingInfo {
+func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 	info := new(MeetingInfo)
 
 	info.Title = infoSerial.Title
-	USERS := GetUserTableTotal()
-	info.Sponsor = USERS.Get(infoSerial.Sponsor)
+
+	USERS := GetAllUsersRegistered()
+
+	// CHECK: Need ensure Sponsor not nil ?
+	info.Sponsor = USERS.Ref(infoSerial.Sponsor)
+
 	for _, infoSerial := range infoSerial.Participators {
-		u := USERS.Get(infoSerial.Name)
+		u := USERS.Ref(infoSerial.Name)
 		info.Participators.Add(u)
 	}
+
 	// FIXME: for no error returned
 	var err1, err2 error
 	info.StartTime, err1 = time.Parse(TimeLayout, infoSerial.StartTime)
 	info.EndTime, err2 = time.Parse(TimeLayout, infoSerial.EndTime)
-
 	if err1 != nil || err2 != nil {
 		log.Fatalf("time.Parse fail when parsing %v / %v", infoSerial.StartTime, infoSerial.EndTime)
 	}
+
 	return info
 }
 
-type Meeting struct {
-	MeetingInfo
-}
+type MeetingInfoSerializableList []MeetingInfoSerializable
+
+const TimeLayout = time.RFC3339
 
 // TODO: abstract Meeting(List) and User(List)
 
+// CHECK: if need, use pointer instead of value
 func NewMeeting(info MeetingInfo) *Meeting {
 	if info.Title.Empty() {
 		// FIXME: more elegant ?
@@ -87,20 +92,23 @@ func NewMeeting(info MeetingInfo) *Meeting {
 	return m
 }
 
-func DeserializeMeeting(decoder Decoder) (*Meeting, error) {
+func LoadMeeting(decoder Decoder, m *Meeting) {
 	mInfoSerial := new(MeetingInfoSerializable)
 
 	err := decoder.Decode(mInfoSerial)
 	if err != nil {
 		log.Fatal(err) // FIXME:
-		return nil, err
 	}
-	meeting := NewMeeting(*(mInfoSerial.toRegular()))
-	return meeting, nil
+	m.MeetingInfo = *(mInfoSerial.Deserialize())
+}
+func LoadedMeeting(decoder Decoder) *Meeting {
+	m := new(Meeting)
+	LoadMeeting(decoder, m)
+	return m
 }
 
-func (m Meeting) Serialize(encoder Encoder) error {
-	return encoder.Encode(*m.MeetingInfo.toSerializable())
+func (m *Meeting) Save(encoder Encoder) error {
+	return encoder.Encode(*m.MeetingInfo.Serialize())
 }
 
 // ................................................................
@@ -111,50 +119,102 @@ type MeetingList struct {
 
 type MeetingListRaw = []*Meeting
 
-const (
-	defaultMeetingListLength = 5
-)
-
 func NewMeetingList() *MeetingList {
 	ml := new(MeetingList)
 	ml.Meetings = make(map[MeetingTitle](*Meeting))
 	return ml
 }
 
-func DeserializeMeetingList(decoder Decoder) (*MeetingList, error) {
-	ml := NewMeetingList()
-	for decoder.More() {
-		// TODO: MeetingInfo <---> MeetingInfoSerializable integration
-		mInfoSerial := new(MeetingInfoSerializable)
-		err := decoder.Decode(mInfoSerial)
-		if err != nil {
-			log.Fatal(err) // FIXME:
-			return nil, err
-		}
-		meeting := NewMeeting(*(mInfoSerial.toRegular()))
-		if err := ml.Add(meeting); err != nil {
-			log.Fatal(err)
-			return ml, err // FIXME:
+func LoadMeetingList(decoder Decoder, ml *MeetingList) {
+	// for decoder.More() {
+	// 	meeting := LoadedMeeting(decoder)
+	// 	if err := ml.Add(meeting); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }
+	mlSerial := new(MeetingInfoSerializableList)
+	if err := decoder.Decode(mlSerial); err != nil {
+		log.Fatal(err)
+	}
+	for _, mInfoSerial := range *mlSerial {
+		m := NewMeeting(*(mInfoSerial.Deserialize()))
+		if err := ml.Add(m); err != nil {
+			log.Printf(err.Error())
 		}
 	}
-	return ml, nil
+}
+func (ml *MeetingList) LoadFrom(decoder Decoder) {
+	LoadMeetingList(decoder, ml)
 }
 
-func (ml *MeetingList) Serialize(encoder Encoder) error {
-	sl := ml.toSerializable()
-	// LOGF("sl: %+v\n", sl)
+func LoadedMeetingList(decoder Decoder) *MeetingList {
+	ml := NewMeetingList()
+	LoadMeetingList(decoder, ml)
+	return ml
+}
+
+func (ml *MeetingList) Serialize() MeetingInfoSerializableList {
+	meetings := ml.Slice()
+	ret := make(MeetingInfoSerializableList, 0, ml.Size())
+
+	// logln("ml.Size(): ", ml.Size())
+	// logf("Serialize: %+v \n", meetings)
+	for _, m := range meetings {
+
+		// FIXME: these are introduced since up to now, it is possible that MeetingList contains nil Meeting
+		if m == nil {
+			log.Printf("A nil Meeting is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		ret = append(ret, *(m.MeetingInfo.Serialize()))
+		// logf("%+v\n", m.MeetingInfo)
+		// smi := *(m.MeetingInfo.Serialize())
+		// logf("%+v\n", smi)
+		// ret = append(ret, smi)
+	}
+	return ret
+}
+
+func (ml MeetingInfoSerializableList) Size() int {
+	return len(ml)
+}
+
+func (mlSerial MeetingInfoSerializableList) Deserialize() *MeetingList {
+	ret := NewMeetingList()
+
+	for _, mInfoSerial := range mlSerial {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		// FIXME: Not use `== nil` because `mInfoSerial` is a struct
+		if mInfoSerial.Title.Empty() {
+			log.Printf("A No-Title MeetingInfo is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		m := NewMeeting(*(mInfoSerial.Deserialize()))
+		if err := ret.Add(m); err != nil {
+			log.Printf(err.Error()) // CHECK:
+		}
+	}
+	return ret
+}
+
+func (ml *MeetingList) Save(encoder Encoder) error {
+	sl := ml.Serialize()
+	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
 }
 
-func (ml MeetingList) Size() int {
+func (ml *MeetingList) Size() int {
 	return len(ml.Meetings)
 }
 
-func (ml *MeetingList) Get(title MeetingTitle) *Meeting {
+func (ml *MeetingList) Ref(title MeetingTitle) *Meeting {
 	return ml.Meetings[title] // NOTE: if directly return accessed result from a map like this, would not get the (automatical) `ok`
 }
-func (ml MeetingList) Contains(title MeetingTitle) bool {
-	m := ml.Get(title)
+func (ml *MeetingList) Contains(title MeetingTitle) bool {
+	m := ml.Ref(title)
 	return m != nil
 }
 
@@ -184,15 +244,15 @@ func (ml *MeetingList) PickOut(title MeetingTitle) (*Meeting, error) {
 	if title.Empty() {
 		return nil, ErrEmptyMeetingTitle
 	}
-	m := ml.Get(title)
+	m := ml.Ref(title)
 	if m == nil {
-		return m, ErrMeetingNotFound
+		return nil, ErrMeetingNotFound
 	}
 	defer ml.Remove(m)
 	return m, nil
 }
 
-func (ml MeetingList) Slice() MeetingListRaw {
+func (ml *MeetingList) Slice() MeetingListRaw {
 	meetings := make(MeetingListRaw, 0, ml.Size())
 	for _, m := range ml.Meetings {
 		meetings = append(meetings, m) // CHECK: maybe better to use index in golang ?
@@ -200,30 +260,7 @@ func (ml MeetingList) Slice() MeetingListRaw {
 	return meetings
 }
 
-func (ml MeetingList) toSerializable() []MeetingInfoSerializable {
-	meetings := ml.Slice()
-	ret := make([]MeetingInfoSerializable, 0, ml.Size())
-
-	// LOG("ml.Size(): ", ml.Size())
-	// LOGF("toSerializable: %+v \n", meetings)
-	for _, m := range meetings {
-
-		// FIXME: these are introduced since up to now, it is possible that MeetingList contains nil Meeting
-		if m == nil {
-			log.Printf("A nil Meeting is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		ret = append(ret, *(m.MeetingInfo.toSerializable()))
-		// LOGF("%+v\n", m.MeetingInfo)
-		// smi := *(m.MeetingInfo.toSerializable())
-		// LOGF("%+v\n", smi)
-		// ret = append(ret, smi)
-	}
-	return ret
-}
-
-// func (ml *MeetingList) ForEach(f func(*Meeting)) error {
+// CHECK: should limit func type ?
 func (ml *MeetingList) ForEach(fn interface{}) error {
 	switch f := fn.(type) {
 	case func(MeetingTitle) error:

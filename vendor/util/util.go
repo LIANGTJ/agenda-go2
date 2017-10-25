@@ -12,6 +12,10 @@ var (
 	// Logf = func(args ...interface{}) {}
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
 // Params support named-paaram
 type Params = map[string](interface{})
 

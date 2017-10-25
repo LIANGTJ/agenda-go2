@@ -7,18 +7,21 @@ import (
 	"util"
 )
 
-var LOG = util.Log
-var LOGF = util.Logf
+var logln = util.Log
+var logf = util.Logf
 
 type Username = util.Identifier
+
+// TODO: Not sure where to place ...
+var UsersAllRegistered = *(NewUserList())
 
 // TODO: if Username keeps its nonlocal-type, this func never okay ...
 //      However, if Username be a stand-alone type, the func:Empty would screw up
 // func (name Username) RefInAllUsers() *User {
-// 	return UserTableTotal.Get(name)
+// 	return UsersAllRegistered.Ref(name)
 // }
-func GetUserTableTotal() *UserList {
-	return UserTableTotal
+func GetAllUsersRegistered() *UserList {
+	return &UsersAllRegistered
 }
 
 type UserInfo struct {
@@ -46,25 +49,33 @@ func NewUser(info UserInfo) *User {
 	u := new(User)
 	u.UserInfo = info
 
-	// NOTE: support `UserTableTotal`
+	// NOTE: support `UsersAllRegistered`
 	// TODO: Do something when re-newing a existed-user.
-	UserTableTotal.Add(u)
+	UsersAllRegistered.Add(u)
 
 	return u
 }
 
-func DeserializeUser(decoder Decoder) (*User, error) {
+func LoadUsersAllRegistered(decoder Decoder) {
+	users := &(UsersAllRegistered)
+	LoadUserList(decoder, users)
+}
+
+func LoadUser(decoder Decoder, u *User) {
 	uInfo := new(UserInfo)
 	err := decoder.Decode(uInfo)
 	if err != nil {
-		log.Fatal(err) // FIXME:
-		return nil, err
+		log.Fatal(err)
 	}
-	user := NewUser(*uInfo)
-	return user, nil
+	u.UserInfo = *uInfo
+}
+func LoadedUser(decoder Decoder) *User {
+	u := new(User)
+	LoadUser(decoder, u)
+	return u
 }
 
-func (u User) Serialize(encoder Encoder) error {
+func (u *User) Save(encoder Encoder) error {
 	return encoder.Encode(u.UserInfo)
 }
 
@@ -107,70 +118,103 @@ type UserList struct {
 
 type UserListRaw = []*User
 
-const (
-	defaultUserListLength = 5
-)
+type UserInfoList []UserInfo
+type UserInfoListSerializable []UserInfoSerializable
 
-// TODO: Not sure where to place ...
-var UserTableTotal = NewUserList()
-
-func (u User) AllUsers() *UserList {
-	return UserTableTotal
-}
-
-/* func NewUserList() *UserList {
-	users := make(UserList, defaultUserListLength)
-
-	return &UserList{Users: users}
-} */
 func NewUserList() *UserList {
 	ul := new(UserList)
 	ul.Users = make(map[Username](*User))
 	return ul
 }
 
-func DeserializeUserList(decoder Decoder) (*UserList, error) {
-	ul := NewUserList()
-	for decoder.More() {
-		uInfo := new(UserInfo)
-		err := decoder.Decode(uInfo)
-		if err != nil {
-			log.Fatal(err) // FIXME:
-			return nil, err
-		}
-		user := NewUser(*uInfo)
-		if err := ul.Add(user); err != nil {
-			log.Fatal(err)
-			return ul, err // FIXME:
+// CHECK: Need in-place load method ?
+func LoadUserList(decoder Decoder, ul *UserList) {
+	// CHECK: Need clear ul ?
+	// for decoder.More() {
+	// 	user := LoadedUser(decoder)
+	// 	if err := ul.Add(user); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }
+	ulSerial := new(UserInfoListSerializable)
+	if err := decoder.Decode(ulSerial); err != nil {
+		log.Fatal(err)
+	}
+	for _, uInfoSerial := range *ulSerial {
+		u := NewUser(uInfoSerial)
+		if err := ul.Add(u); err != nil {
+			log.Printf(err.Error())
 		}
 	}
-	return ul, nil
+}
+func (ul *UserList) LoadFrom(decoder Decoder) {
+	LoadUserList(decoder, ul)
 }
 
-func (ul *UserList) Serialize(encoder Encoder) error {
-	sl := ul.toSerializable()
-	// LOGF("sl: %+v\n", sl)
+func LoadedUserList(decoder Decoder) *UserList {
+	ul := NewUserList()
+	LoadUserList(decoder, ul)
+	return ul
+}
+
+func (ul *UserList) Serialize() UserInfoListSerializable {
+	users := ul.Slice()
+	ret := make(UserInfoListSerializable, 0, ul.Size())
+
+	// logln("ul.Size(): ", ul.Size())
+	// logf("Serialize: %+v \n", users)
+	for _, u := range users {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		if u == nil {
+			log.Printf("A nil User is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		ret = append(ret, u.UserInfo)
+	}
+	return ret
+}
+
+func (ul UserInfoListSerializable) Size() int {
+	return len(ul)
+}
+
+func (ulSerial UserInfoListSerializable) Deserialize() *UserList {
+	ret := NewUserList()
+
+	for _, uInfo := range ulSerial {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		// FIXME: Not use `== nil` because `uInfo` is a struct
+		if uInfo.Name.Empty() {
+			log.Printf("A No-Name UserInfo is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		u := NewUser(uInfo)
+		if err := ret.Add(u); err != nil {
+			log.Printf(err.Error()) // CHECK:
+		}
+	}
+	return ret
+}
+
+func (ul *UserList) Save(encoder Encoder) error {
+	sl := ul.Serialize()
+	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
 }
 
-// TODO:  Need in-place deserialize ?
-func (ul *UserList) Deserialize(decoder Decoder) error {
-	// users, err := DeserializeUserList(decoder)
-	// if err == nil {
-	// 	// ul <- users
-	// }
-	return ErrNeedImplement
-}
-
-func (ul UserList) Size() int {
+func (ul *UserList) Size() int {
 	return len(ul.Users)
 }
 
-func (ul *UserList) Get(name Username) *User {
+func (ul *UserList) Ref(name Username) *User {
 	return ul.Users[name] // NOTE: if directly return accessed result from a map like this, would not get the (automatical) `ok`
 }
-func (ul UserList) Contains(name Username) bool {
-	u := ul.Get(name)
+func (ul *UserList) Contains(name Username) bool {
+	u := ul.Ref(name)
 	return u != nil
 }
 
@@ -200,7 +244,7 @@ func (ul *UserList) PickOut(name Username) (*User, error) {
 	if name.Empty() {
 		return nil, ErrEmptyUsername
 	}
-	u := ul.Get(name)
+	u := ul.Ref(name)
 	if u == nil {
 		return u, ErrUserNotFound
 	}
@@ -208,8 +252,7 @@ func (ul *UserList) PickOut(name Username) (*User, error) {
 	return u, nil
 }
 
-func (ul UserList) Slice() UserListRaw {
-	// NOTE: when make a `Slice`, the `len` value decide the position `append` to TODEL:
+func (ul *UserList) Slice() UserListRaw {
 	users := make(UserListRaw, 0, ul.Size())
 	for _, u := range ul.Users {
 		users = append(users, u) // CHECK: maybe better to use index in golang ?
@@ -217,26 +260,7 @@ func (ul UserList) Slice() UserListRaw {
 	return users
 }
 
-func (ul UserList) toSerializable() []UserInfoSerializable {
-	users := ul.Slice()
-	ret := make([]UserInfoSerializable, 0, ul.Size())
-
-	// LOG("ul.Size(): ", ul.Size())
-	// LOGF("toSerializable: %+v \n", users)
-	for _, u := range users {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		if u == nil {
-			log.Printf("A nil User is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		ret = append(ret, u.UserInfo)
-	}
-	return ret
-}
-
-// func (ul *UserList) ForEach(f func(*User)) error {
+// CHECK: should limit func type ?
 func (ul *UserList) ForEach(fn interface{}) error {
 	switch f := fn.(type) {
 	case func(Username) error:
