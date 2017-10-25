@@ -12,12 +12,25 @@ var LOGF = util.Logf
 
 type Username = util.Identifier
 
+// TODO: if Username keeps its nonlocal-type, this func never okay ...
+//      However, if Username be a stand-alone type, the func:Empty would screw up
+// func (name Username) RefInAllUsers() *User {
+// 	return UserTableTotal.Get(name)
+// }
+func GetUserTableTotal() *UserList {
+	return UserTableTotal
+}
+
 type UserInfo struct {
 	Name  Username
 	Auth  auth.Auth
 	Mail  string
 	Phone string
 }
+
+// NOTE: Maybe not to export ?
+// NOTE: Maybe to stand alone type ?
+type UserInfoSerializable = UserInfo
 
 type User struct {
 	UserInfo
@@ -32,6 +45,11 @@ func NewUser(info UserInfo) *User {
 	}
 	u := new(User)
 	u.UserInfo = info
+
+	// NOTE: support `UserTableTotal`
+	// TODO: Do something when re-newing a existed-user.
+	UserTableTotal.Add(u)
+
 	return u
 }
 
@@ -92,6 +110,13 @@ type UserListRaw = []*User
 const (
 	defaultUserListLength = 5
 )
+
+// TODO: Not sure where to place ...
+var UserTableTotal = NewUserList()
+
+func (u User) AllUsers() *UserList {
+	return UserTableTotal
+}
 
 /* func NewUserList() *UserList {
 	users := make(UserList, defaultUserListLength)
@@ -192,12 +217,12 @@ func (ul UserList) Slice() UserListRaw {
 	return users
 }
 
-func (ul UserList) toSerializable() []UserInfo {
+func (ul UserList) toSerializable() []UserInfoSerializable {
 	users := ul.Slice()
-	ret := make([]UserInfo, 0, ul.Size())
+	ret := make([]UserInfoSerializable, 0, ul.Size())
 
 	// LOG("ul.Size(): ", ul.Size())
-	LOGF("toSerializable: %+v \n", users)
+	// LOGF("toSerializable: %+v \n", users)
 	for _, u := range users {
 
 		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User

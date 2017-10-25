@@ -24,26 +24,39 @@ type UserLoader struct {
 func UserDataPath() string { return util.WorkingDir() + "user-data.json" }
 func UserTestPath() string { return util.WorkingDir() + "user-test.json" }
 
-func (loader *UserLoader) Load(ul *entity.UserList) error {
+func MeetingDataPath() string { return util.WorkingDir() + "meeting-data.json" }
+func MeetingTestPath() string { return util.WorkingDir() + "meeting-test.json" }
+
+// NOTE: REPEAT: `entity.DeserializeUserList`
+func Load(ul *entity.UserList) error {
+	// CHECK: Need clear ul ?
 	file, err := os.Open(UserDataPath())
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 	decoder := json.NewDecoder(file)
 	for decoder.More() {
-		var m entity.Meeting
-		if err := decoder.Decode(&m); err != nil {
+		uInfo := new(entity.UserInfo)
+		if err := decoder.Decode(uInfo); err != nil {
 			log.Fatal(err)
+			return err
 		}
-		// fmt.Printf("%s: %s\n", m.Name, m.Text)
+		user := entity.NewUser(*uInfo)
+		if err := ul.Add(user); err != nil {
+			log.Fatal(err)
+			return err
+		}
 	}
 	return nil
 }
 
-func Save(ul *entity.UserList) error {
+func SaveUserList(ul *entity.UserList) error {
+	// FIXME: Not simply rewrite
 	file, err := os.Create(UserDataPath())
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 	encoder := json.NewEncoder(file)
 	if err := ul.Serialize(encoder); err != nil {
