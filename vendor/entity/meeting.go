@@ -1,13 +1,39 @@
 package entity
 
 import (
-	"fmt"
 	"log"
 	"time"
-	"util"
 )
 
-type MeetingTitle = util.Identifier
+// util.Identifier
+type MeetingTitle string
+
+func (t *MeetingTitle) Empty() bool {
+	return *t == ""
+}
+func (t *MeetingTitle) Valid() bool {
+	// FIXME: not only !empty
+	return !t.Empty()
+}
+
+// TODO: Not sure where to place ...
+var allMeetings = *(NewMeetingList())
+
+func (title MeetingTitle) RefInAllMeetings() *Meeting {
+	return allMeetings.Ref(title)
+}
+func GetAllMeetings() *MeetingList {
+	return &allMeetings
+}
+
+var dissolvedMeetings = *(NewMeetingList())
+
+func (title MeetingTitle) RefInDissolvedMeetings() *Meeting {
+	return dissolvedMeetings.Ref(title)
+}
+func GetDissolvedMeetings() *MeetingList {
+	return &dissolvedMeetings
+}
 
 type MeetingInfo struct {
 	// ID            int
@@ -35,11 +61,9 @@ func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 
 	serialInfo.Title = info.Title
 
-	sponsor, name := info.Sponsor, util.EmptyIdentifier
-	if sponsor != nil {
-		name = sponsor.Name
+	if sponsor := info.Sponsor; sponsor != nil {
+		serialInfo.Sponsor = sponsor.Name
 	}
-	serialInfo.Sponsor = name
 
 	serialInfo.Participators = info.Participators.Serialize()
 
@@ -53,13 +77,22 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 
 	info.Title = infoSerial.Title
 
-	USERS := GetAllUsersRegistered()
+	/* TODEL:
+	    USERS := GetAllUsersRegistered()
+
+		// CHECK: Need ensure Sponsor not nil ?
+		info.Sponsor = USERS.Ref(infoSerial.Sponsor)
+
+		for _, infoSerial := range infoSerial.Participators {
+			u := USERS.Ref(infoSerial.Name)
+			info.Participators.Add(u)
+		} */
 
 	// CHECK: Need ensure Sponsor not nil ?
-	info.Sponsor = USERS.Ref(infoSerial.Sponsor)
+	info.Sponsor = infoSerial.Sponsor.RefInAllUsers()
 
 	for _, infoSerial := range infoSerial.Participators {
-		u := USERS.Ref(infoSerial.Name)
+		u := infoSerial.Name.RefInAllUsers() // CHECK: ditto
 		info.Participators.Add(u)
 	}
 
@@ -109,6 +142,40 @@ func LoadedMeeting(decoder Decoder) *Meeting {
 
 func (m *Meeting) Save(encoder Encoder) error {
 	return encoder.Encode(*m.MeetingInfo.Serialize())
+}
+
+// Dissolve deletes the Meeting (, not by a User)
+func (m *Meeting) Dissolve() error {
+	if err := GetAllMeetings().Remove(m); err != nil {
+		log.Printf(err.Error())
+		return err
+	}
+	if err := GetDissolvedMeetings().Add(m); err != nil {
+		log.Printf(err.Error())
+		return err
+	}
+	return nil
+}
+
+// Exclude removes User from Meeting's participators list
+func (m *Meeting) Exclude(u *User) error {
+	if err := m.Participators.Remove(u); err != nil {
+		log.Printf(err.Error())
+		return err
+	}
+	if m.Participators.Size() <= 0 {
+		return m.Dissolve()
+	}
+	return nil
+}
+
+// Involve adds User to Meeting's participators list
+func (m *Meeting) Involve(u *User) error {
+	if err := m.Participators.Add(u); err != nil {
+		log.Printf(err.Error())
+		return err
+	}
+	return nil
 }
 
 // ................................................................
@@ -260,29 +327,34 @@ func (ml *MeetingList) Slice() MeetingListRaw {
 	return meetings
 }
 
-// CHECK: should limit func type ?
-func (ml *MeetingList) ForEach(fn interface{}) error {
-	switch f := fn.(type) {
-	case func(MeetingTitle) error:
-		for k := range ml.Meetings {
-			if err := f(k); err != nil {
-				return err
-			}
+// ForEach used to extension/concrete logic for whole MeetingList
+func (ml *MeetingList) ForEach(fn func(*Meeting) error) error {
+	for _, v := range ml.Meetings {
+		if err := fn(v); err != nil {
+			// CHECK: Or, lazy error ?
+			return err
 		}
-	case func(*Meeting) error:
-		for _, v := range ml.Meetings {
-			if err := f(v); err != nil {
-				return err
-			}
-		}
-	case func(MeetingTitle, *Meeting) error:
-		for k, v := range ml.Meetings {
-			if err := f(k, v); err != nil {
-				return err
-			}
-		}
-	default:
-		return NewAgendaError(fmt.Sprintf("Given function has unmatched signature: %T", f))
 	}
 	return nil
+}
+
+// Filter used for all extension/concrete select for whole MeetingList
+func (ml *MeetingList) Filter(pred func(Meeting) bool) *MeetingList {
+	ret := NewMeetingList()
+	for _, m := range ml.Meetings {
+		if pred(*m) {
+			ret.Add(m)
+		}
+	}
+	return ret
+}
+
+// SponsoredBy checks if Meeting sponsored by User
+func (m *Meeting) SponsoredBy(name Username) bool {
+	return m.Sponsor.Name == name
+}
+
+// ContainsParticipator checks if Meeting's participators contains the User
+func (m *Meeting) ContainsParticipator(name Username) bool {
+	return m.Participators.Contains(name)
 }

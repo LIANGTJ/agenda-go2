@@ -44,8 +44,8 @@ func main() {
 	ul.Add(entity.NewUser(entity.UserInfo{"b", "b", "b", "123"}))
 	ul.Add(entity.NewUser(entity.UserInfo{"bb", "bb", "bb", "123"}))
 
-	if err := ul.ForEach(func(key entity.Username) error {
-		println(counter, key, ul.Users[key])
+	if err := ul.ForEach(func(u *entity.User) error {
+		println(counter, u.Name, ul.Users[u.Name])
 		defer count()
 		return nil
 	}); err != nil {
