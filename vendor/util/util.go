@@ -19,20 +19,12 @@ func init() {
 // Params support named-paaram
 type Params = map[string](interface{})
 
-// Identifier as a unique identifier, like ID
-type Identifier string
-
-// CHECK: EmptyIdentifier were unexported before planning to use Username/MeetingTitle as a stand-alone type.
-var EmptyIdentifier = *new(Identifier)
-
-func (n Identifier) Empty() bool {
-	return n == EmptyIdentifier
-}
+var DebugMode = true
 
 // WorkingDir for agenda.
 func WorkingDir() string {
 	location, existed := os.LookupEnv("HOME")
-	if !existed {
+	if !existed || DebugMode {
 		location = "."
 	}
 	// NOTE: here to ensure workingdir existed ?
