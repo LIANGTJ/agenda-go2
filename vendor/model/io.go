@@ -12,11 +12,6 @@ import (
 var wg sync.WaitGroup
 var fin = os.Stdin
 
-/* type Loader interface {
-	// TODO: need to abstract UserList and MeetingList first
-	Load(*interface{}) error
-} */
-
 // Load : load all resources for agenda.
 func Load() {
 	loadConfig()

@@ -13,6 +13,9 @@ var (
 
 	ErrEmptyUsername = errors.New("Given username cannot be empty.")
 
+	ErrSponsorAuthority      = errors.New("Only the sponsor can modify the meeting.")
+	ErrSponsorResponsibility = errors.New("The sponsor can only cancel but not quit the meeting.")
+
 	// Meeting
 	ErrNilMeeting          = errors.New("A nil meeting/*meeting is to be used.")
 	ErrExistedMeeting      = errors.New("The meeting has been existed.")

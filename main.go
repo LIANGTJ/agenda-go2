@@ -7,7 +7,8 @@ import (
 	"model"
 	"os"
 
-	"cmd"
+	cmd "github.com/Binly42/agenda-go/cmd"
+	// "github.com/spf13/cobra"
 )
 
 // var logln = util.Log
@@ -31,4 +32,5 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 }

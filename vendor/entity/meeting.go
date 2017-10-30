@@ -68,7 +68,7 @@ func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 		serialInfo.Sponsor = sponsor.Name
 	}
 
-	serialInfo.Participators = info.Participators.Contract()
+	serialInfo.Participators = info.Participators.identifiers()
 
 	serialInfo.StartTime = info.StartTime.Format(TimeLayout)
 	serialInfo.EndTime = info.EndTime.Format(TimeLayout)
@@ -100,6 +100,30 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 }
 
 type MeetingInfoListSerializable []MeetingInfoSerializable
+
+func (ml MeetingInfoListSerializable) Size() int {
+	return len(ml)
+}
+
+func (mlSerial MeetingInfoListSerializable) Deserialize() *MeetingList {
+	ret := NewMeetingList()
+
+	for _, mInfoSerial := range mlSerial {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		// FIXME: Not use `== nil` because `mInfoSerial` is a struct
+		if mInfoSerial.Title.Empty() {
+			log.Printf("A No-Title MeetingInfo is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		m := NewMeeting(*(mInfoSerial.Deserialize()))
+		if err := ret.Add(m); err != nil {
+			log.Printf(err.Error()) // CHECK:
+		}
+	}
+	return ret
+}
 
 const TimeLayout = time.RFC3339
 
@@ -134,6 +158,16 @@ func LoadedMeeting(decoder Decoder) *Meeting {
 
 func (m *Meeting) Save(encoder Encoder) error {
 	return encoder.Encode(*m.MeetingInfo.Serialize())
+}
+
+// SponsoredBy checks if Meeting sponsored by User
+func (m *Meeting) SponsoredBy(name Username) bool {
+	return m.Sponsor.Name == name
+}
+
+// ContainsParticipator checks if Meeting's participators contains the User
+func (m *Meeting) ContainsParticipator(name Username) bool {
+	return m.Participators.Contains(name)
 }
 
 // Dissolve deletes the Meeting (, not by a User)
@@ -239,30 +273,6 @@ func (ml *MeetingList) Textualize() MeetingInfoListPrintable {
 	return ml.Serialize()
 }
 
-func (ml MeetingInfoListSerializable) Size() int {
-	return len(ml)
-}
-
-func (mlSerial MeetingInfoListSerializable) Deserialize() *MeetingList {
-	ret := NewMeetingList()
-
-	for _, mInfoSerial := range mlSerial {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		// FIXME: Not use `== nil` because `mInfoSerial` is a struct
-		if mInfoSerial.Title.Empty() {
-			log.Printf("A No-Title MeetingInfo is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		m := NewMeeting(*(mInfoSerial.Deserialize()))
-		if err := ret.Add(m); err != nil {
-			log.Printf(err.Error()) // CHECK:
-		}
-	}
-	return ret
-}
-
 func (ml *MeetingList) Save(encoder Encoder) error {
 	sl := ml.Serialize()
 	// logf("sl: %+v\n", sl)
@@ -343,14 +353,4 @@ func (ml *MeetingList) Filter(pred func(Meeting) bool) *MeetingList {
 		}
 	}
 	return ret
-}
-
-// SponsoredBy checks if Meeting sponsored by User
-func (m *Meeting) SponsoredBy(name Username) bool {
-	return m.Sponsor.Name == name
-}
-
-// ContainsParticipator checks if Meeting's participators contains the User
-func (m *Meeting) ContainsParticipator(name Username) bool {
-	return m.Participators.Contains(name)
 }

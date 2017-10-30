@@ -27,12 +27,12 @@ func (name *Username) Valid() bool {
 // TODO: Not sure where to place ...
 var allUsersRegistered = *(NewUserList())
 
-// RefInAllUsers returns the ref of a registered User depending on the Username
+// RefInAllUsers returns the ref of a Registered User depending on the Username
 func (name Username) RefInAllUsers() *User {
 	return allUsersRegistered.Ref(name)
 }
 
-// GetAllUsersRegistered returns the reference of the UserList of all registered Users
+// GetAllUsersRegistered returns the reference of the UserList of all Registered Users
 func GetAllUsersRegistered() *UserList {
 	return &allUsersRegistered
 }
@@ -63,20 +63,21 @@ func NewUser(info UserInfo) *User {
 	}
 	u := new(User)
 	u.UserInfo = info
-
-	// TODO: Do something when re-newing a existed-user.
-	allUsersRegistered.Add(u)
-
 	return u
 }
 
-// LoadUsersAllRegistered concretely loads all registered Users
+// RegisterUser ...
+func RegisterUser(u *User) error {
+	return GetAllUsersRegistered().Add(u)
+}
+
+// LoadUsersAllRegistered concretely loads all Registered Users
 func LoadUsersAllRegistered(decoder Decoder) {
 	users := &(allUsersRegistered)
 	LoadUserList(decoder, users)
 }
 
-// SaveUsersAllRegistered concretely saves all registered Users
+// SaveUsersAllRegistered concretely saves all Registered Users
 func SaveUsersAllRegistered(encoder Encoder) error {
 	users := &(allUsersRegistered)
 	return users.Save(encoder)
@@ -104,7 +105,7 @@ func (u *User) Save(encoder Encoder) error {
 	return encoder.Encode(u.UserInfo)
 }
 
-func (u *User) registered() bool {
+func (u *User) Registered() bool {
 	if u == nil {
 		return false
 	}
@@ -117,7 +118,7 @@ func (u *User) involvedMeetings() *MeetingList {
 	})
 }
 
-func (u *User) freeWhen(start, end time.Time) bool {
+func (u *User) FreeWhen(start, end time.Time) bool {
 	if u == nil {
 		return false
 	}
@@ -175,7 +176,7 @@ func (u *User) QueryAccount() error {
 
 // QueryAccountAll queries all accounts, where User as the actor
 func (u *User) QueryAccountAll() UserInfoList {
-	return GetAllUsersRegistered().textualize()
+	return GetAllUsersRegistered().Infos()
 }
 
 // CreateMeeting creates a meeting, where User as the actor
@@ -190,12 +191,12 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 		return nil, ErrExistedMeetingTitle
 	}
 
-	if !u.registered() {
+	if !u.Registered() {
 		return nil, ErrUserNotRegistered
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
-		if !u.registered() {
+		if !u.Registered() {
 			return ErrUserNotRegistered
 		}
 		return nil
@@ -209,7 +210,7 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
-		if !u.freeWhen(info.StartTime, info.EndTime) {
+		if !u.FreeWhen(info.StartTime, info.EndTime) {
 			return ErrConflictedTimeInterval
 		}
 		return nil
@@ -237,11 +238,15 @@ func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error
 		return ErrNilUser
 	}
 
+	if !meeting.SponsoredBy(u.Name) {
+		return ErrSponsorAuthority
+	}
+
 	if meeting.ContainsParticipator(name) {
 		return ErrExistedUser
 	}
 
-	if !user.freeWhen(meeting.StartTime, meeting.EndTime) {
+	if !user.FreeWhen(meeting.StartTime, meeting.EndTime) {
 		return ErrConflictedTimeInterval
 	}
 
@@ -260,6 +265,10 @@ func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) 
 	}
 	if user == nil {
 		return ErrUserNotRegistered
+	}
+
+	if !meeting.SponsoredBy(u.Name) {
+		return ErrSponsorAuthority
 	}
 
 	if !meeting.ContainsParticipator(name) {
@@ -283,11 +292,43 @@ func (u *User) meetingsSpoonsored() ([]*Meeting, error) {
 }
 
 // CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
-func (u *User) CancelMeeting() error { return ErrNeedImplement }
+func (u *User) CancelMeeting(title MeetingTitle) error {
+	if u == nil {
+		return ErrNilUser
+	}
+	meeting := title.RefInAllMeetings()
+	if meeting == nil {
+		return ErrMeetingNotFound
+	}
+
+	if !meeting.SponsoredBy(u.Name) {
+		return ErrSponsorAuthority
+	}
+
+	return meeting.Dissolve()
+}
 
 // QuitMeeting quits from the given meeting, where User as the actor
 // CHECK: what to do in case User is the sponsor ?
-func (u *User) QuitMeeting() error { return ErrNeedImplement }
+func (u *User) QuitMeeting(title MeetingTitle) error {
+	if u == nil {
+		return ErrNilUser
+	}
+	meeting := title.RefInAllMeetings()
+	if meeting == nil {
+		return ErrMeetingNotFound
+	}
+
+	if meeting.SponsoredBy(u.Name) {
+		return ErrSponsorResponsibility // NOTE: ???
+	}
+
+	if !meeting.ContainsParticipator(u.Name) {
+		return ErrUserNotFound
+	}
+
+	return meeting.Exclude(u)
+}
 
 // ................................................................
 
@@ -300,10 +341,56 @@ type UserList struct {
 // NOTE: these type may be modified/removed in future
 type UserListRaw = []*User
 
-type UserInfoList []UserInfo // TODEL:
+type UserInfoList []UserInfo
 
 // UserInfoListSerializable represents a list of serializable UserInfo
 type UserInfoListSerializable []UserInfoSerializable
+
+// Serialize just serializes from UserList to UserInfoListSerializable
+func (ul *UserList) Serialize() UserInfoListSerializable {
+	users := ul.Slice()
+	ret := make(UserInfoListSerializable, 0, ul.Size())
+
+	// logln("ul.Size(): ", ul.Size())
+	// logf("Serialize: %+v \n", users)
+	for _, u := range users {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		if u == nil {
+			log.Printf("A nil User is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		ret = append(ret, u.UserInfo)
+	}
+	return ret
+}
+
+// Size just returns the size
+func (ulSerial UserInfoListSerializable) Size() int {
+	return len(ulSerial)
+}
+
+// Deserialize deserializes from serialized UserInfoList to UserList
+func (ulSerial UserInfoListSerializable) Deserialize() *UserList {
+	ret := NewUserList()
+
+	for _, uInfo := range ulSerial {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		// FIXME: Not use `== nil` because `uInfo` is a  struct
+		if uInfo.Name.Empty() {
+			log.Printf("A No-Name UserInfo is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		u := NewUser(uInfo)
+		if err := ret.Add(u); err != nil {
+			log.Printf(err.Error()) // CHECK:
+		}
+	}
+	return ret
+}
 
 // NewUserList creates a UserList object
 func NewUserList() *UserList {
@@ -348,23 +435,14 @@ func LoadedUserList(decoder Decoder) *UserList {
 	return ul
 }
 
-func (ul *UserList) Contract() []Username {
-	users := ul.Slice()
+func (ul *UserList) identifiers() []Username {
 	ret := make([]Username, 0, ul.Size())
-
-	for _, u := range users {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		if u == nil {
-			log.Printf("A nil User is to be used. Just SKIP OVER it.")
-			continue
-		}
-
+	for _, u := range ul.Infos() {
 		ret = append(ret, u.Name)
 	}
 	return ret
 }
-func (ul *UserList) textualize() UserInfoList {
+func (ul *UserList) Infos() UserInfoList {
 	users := ul.Slice()
 	ret := make(UserInfoList, 0, ul.Size())
 
@@ -377,52 +455,6 @@ func (ul *UserList) textualize() UserInfoList {
 		}
 
 		ret = append(ret, u.UserInfo)
-	}
-	return ret
-}
-
-// Serialize just serializes from UserList to UserInfoListSerializable
-func (ul *UserList) Serialize() UserInfoListSerializable {
-	users := ul.Slice()
-	ret := make(UserInfoListSerializable, 0, ul.Size())
-
-	// logln("ul.Size(): ", ul.Size())
-	// logf("Serialize: %+v \n", users)
-	for _, u := range users {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		if u == nil {
-			log.Printf("A nil User is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		ret = append(ret, u.UserInfo)
-	}
-	return ret
-}
-
-// Size just returns the size
-func (ulSerial UserInfoListSerializable) Size() int {
-	return len(ulSerial)
-}
-
-// Deserialize deserializes from serialized UserInfoList to UserList
-func (ulSerial UserInfoListSerializable) Deserialize() *UserList {
-	ret := NewUserList()
-
-	for _, uInfo := range ulSerial {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		// FIXME: Not use `== nil` because `uInfo` is a struct
-		if uInfo.Name.Empty() {
-			log.Printf("A No-Name UserInfo is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		u := NewUser(uInfo)
-		if err := ret.Add(u); err != nil {
-			log.Printf(err.Error()) // CHECK:
-		}
 	}
 	return ret
 }
