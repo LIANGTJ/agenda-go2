@@ -14,12 +14,12 @@ import (
 type Username string
 
 // Empty checks if Username empty
-func (name *Username) Empty() bool {
-	return *name == ""
+func (name Username) Empty() bool {
+	return name == ""
 }
 
 // Valid checks if Username valid
-func (name *Username) Valid() bool {
+func (name Username) Valid() bool {
 	// FIXME: not only !empty
 	return !name.Empty()
 }

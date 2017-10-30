@@ -33,8 +33,14 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("register called")
 
-		username, _ := cmd.Flags().GetString("user")
+		username, _ := cmd.Flags().GetString("username")
+		password, _ := cmd.Flags().GetString("password")
+		email, _ := cmd.Flags().GetString("email")
+		phone, _ := cmd.Flags().GetString("phone")
 		fmt.Println("register called by " + username)
+		fmt.Println("register with info password: " + password)
+		fmt.Println("register with info email: " + email)
+		fmt.Println("register with info phone: " + phone)
 	},
 }
 
@@ -51,6 +57,9 @@ func init() {
 	// is called directly, e.g.:
 	// registerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	registerCmd.Flags().StringP("user", "u", "Anonymous", "Help message for username")
+	registerCmd.Flags().StringP("username", "u", "Anonymous", "register info for username")
+	registerCmd.Flags().StringP("password", "p", "", "register info for password")
+	registerCmd.Flags().StringP("email", "e", "", "register info for email")
+	registerCmd.Flags().StringP("phone", "t", "", "register info for phone")
 
 }
