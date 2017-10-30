@@ -174,9 +174,8 @@ func (u *User) QueryAccount() error {
 }
 
 // QueryAccountAll queries all accounts, where User as the actor
-func (u *User) QueryAccountAll() *UserInfoList {
-	ret := GetAllUsersRegistered().textualize()
-	return &ret
+func (u *User) QueryAccountAll() UserInfoList {
+	return GetAllUsersRegistered().textualize()
 }
 
 // CreateMeeting creates a meeting, where User as the actor
@@ -275,8 +274,8 @@ func (u *User) LogOut() error {
 	return ErrNeedImplement
 }
 
-func (u *User) QueryMeetingByInterval(start, end time.Time) *MeetingInfoList {
-	// return u.involvedMeetings()
+func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
+	return u.involvedMeetings().Textualize()
 }
 
 func (u *User) meetingsSpoonsored() ([]*Meeting, error) {
@@ -349,6 +348,22 @@ func LoadedUserList(decoder Decoder) *UserList {
 	return ul
 }
 
+func (ul *UserList) Contract() []Username {
+	users := ul.Slice()
+	ret := make([]Username, 0, ul.Size())
+
+	for _, u := range users {
+
+		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+		if u == nil {
+			log.Printf("A nil User is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		ret = append(ret, u.Name)
+	}
+	return ret
+}
 func (ul *UserList) textualize() UserInfoList {
 	users := ul.Slice()
 	ret := make(UserInfoList, 0, ul.Size())

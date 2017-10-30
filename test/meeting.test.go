@@ -46,7 +46,8 @@ func main() {
 	ml.Add(entity.NewMeeting(entity.MeetingInfo{Title: "b", Sponsor: u, StartTime: t.AddDate(2, 2, 2), EndTime: t}))
 	ml.Add(entity.NewMeeting(entity.MeetingInfo{Title: "bb", Sponsor: u, StartTime: t.AddDate(2, 2, 2), EndTime: t}))
 
-	if err := ml.ForEach(func(key entity.MeetingTitle) error {
+	if err := ml.ForEach(func(m *entity.Meeting) error {
+		key := m.Title
 		logln(counter, key, ml.Meetings[key])
 		defer count()
 		return nil

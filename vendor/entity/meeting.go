@@ -45,12 +45,15 @@ type MeetingInfo struct {
 	EndTime   time.Time
 }
 type MeetingInfoSerializable struct {
-	Title         MeetingTitle
-	Sponsor       Username
-	Participators []UserInfoSerializable
+	Title   MeetingTitle
+	Sponsor Username
+	// Participators []UserInfoSerializable
+	Participators []Username
 	StartTime     string // TODO:
 	EndTime       string
 }
+
+type MeetingInfoListPrintable = MeetingInfoListSerializable
 
 type Meeting struct {
 	MeetingInfo
@@ -65,7 +68,7 @@ func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 		serialInfo.Sponsor = sponsor.Name
 	}
 
-	serialInfo.Participators = info.Participators.Serialize()
+	serialInfo.Participators = info.Participators.Contract()
 
 	serialInfo.StartTime = info.StartTime.Format(TimeLayout)
 	serialInfo.EndTime = info.EndTime.Format(TimeLayout)
@@ -77,22 +80,11 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 
 	info.Title = infoSerial.Title
 
-	/* TODEL:
-	    USERS := GetAllUsersRegistered()
-
-		// CHECK: Need ensure Sponsor not nil ?
-		info.Sponsor = USERS.Ref(infoSerial.Sponsor)
-
-		for _, infoSerial := range infoSerial.Participators {
-			u := USERS.Ref(infoSerial.Name)
-			info.Participators.Add(u)
-		} */
-
 	// CHECK: Need ensure Sponsor not nil ?
 	info.Sponsor = infoSerial.Sponsor.RefInAllUsers()
 
-	for _, infoSerial := range infoSerial.Participators {
-		u := infoSerial.Name.RefInAllUsers() // CHECK: ditto
+	for _, name := range infoSerial.Participators {
+		u := name.RefInAllUsers() // CHECK: ditto
 		info.Participators.Add(u)
 	}
 
@@ -107,7 +99,7 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 	return info
 }
 
-type MeetingInfoSerializableList []MeetingInfoSerializable
+type MeetingInfoListSerializable []MeetingInfoSerializable
 
 const TimeLayout = time.RFC3339
 
@@ -199,7 +191,7 @@ func LoadMeetingList(decoder Decoder, ml *MeetingList) {
 	// 		log.Fatal(err)
 	// 	}
 	// }
-	mlSerial := new(MeetingInfoSerializableList)
+	mlSerial := new(MeetingInfoListSerializable)
 	if err := decoder.Decode(mlSerial); err != nil {
 		log.Fatal(err)
 	}
@@ -220,9 +212,9 @@ func LoadedMeetingList(decoder Decoder) *MeetingList {
 	return ml
 }
 
-func (ml *MeetingList) Serialize() MeetingInfoSerializableList {
+func (ml *MeetingList) Serialize() MeetingInfoListSerializable {
 	meetings := ml.Slice()
-	ret := make(MeetingInfoSerializableList, 0, ml.Size())
+	ret := make(MeetingInfoListSerializable, 0, ml.Size())
 
 	// logln("ml.Size(): ", ml.Size())
 	// logf("Serialize: %+v \n", meetings)
@@ -243,11 +235,15 @@ func (ml *MeetingList) Serialize() MeetingInfoSerializableList {
 	return ret
 }
 
-func (ml MeetingInfoSerializableList) Size() int {
+func (ml *MeetingList) Textualize() MeetingInfoListPrintable {
+	return ml.Serialize()
+}
+
+func (ml MeetingInfoListSerializable) Size() int {
 	return len(ml)
 }
 
-func (mlSerial MeetingInfoSerializableList) Deserialize() *MeetingList {
+func (mlSerial MeetingInfoListSerializable) Deserialize() *MeetingList {
 	ret := NewMeetingList()
 
 	for _, mInfoSerial := range mlSerial {
