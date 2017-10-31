@@ -204,6 +204,7 @@ func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrint
 }
 
 func (u *User) meetingsSponsored() ([]*Meeting, error) {
+
 	return nil, agendaerror.ErrNeedImplement
 }
 
