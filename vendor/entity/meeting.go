@@ -28,6 +28,7 @@ func GetAllMeetings() *MeetingList {
 	return &allMeetings
 }
 
+// FIXME:
 var dissolvedMeetings = *(NewMeetingList())
 
 func (title MeetingTitle) RefInDissolvedMeetings() *Meeting {
@@ -35,6 +36,18 @@ func (title MeetingTitle) RefInDissolvedMeetings() *Meeting {
 }
 func GetDissolvedMeetings() *MeetingList {
 	return &dissolvedMeetings
+}
+
+// LoadAllMeeting concretely loads all Meetings
+func LoadAllMeeting(decoder codec.Decoder) {
+	meetings := GetAllMeetings()
+	LoadMeetingList(decoder, meetings)
+}
+
+// SaveAllMeeting concretely saves all Meetings
+func SaveAllMeeting(encoder codec.Encoder) error {
+	meetings := GetAllMeetings()
+	return meetings.Save(encoder)
 }
 
 type MeetingInfo struct {

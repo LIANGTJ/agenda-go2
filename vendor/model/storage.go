@@ -14,15 +14,55 @@ import (
 var wg sync.WaitGroup
 var fin = os.Stdin
 
+var (
+	filepaths = []string{
+		config.UserDataRegisteredPath(),
+		// config.UserDataPath(),
+		// config.UserTestPath(),
+		config.MeetingDataPath(),
+		// config.MeetingTestPath(),
+		config.AgendaConfigPath(),
+	}
+)
+
+func ensurePathsNeededExist() {
+	if err := os.MkdirAll(config.WorkingDir(), 0777); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, path := range filepaths {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			f, err := os.Create(path)
+			defer f.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+}
+
+func backupOldFiles() {
+	if err := os.MkdirAll(config.BackupDir(), 0777); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // Load : load all resources for agenda.
 func Load() {
+	ensurePathsNeededExist()
+
 	loadConfig()
-	loadRegisteredUserList()
+	loadAllRegisteredUser()
+	loadAllMeeting()
 }
 
 // Save : Save all data for agenda.
 func Save() error {
-	if err := saveRegisteredUserList(); err != nil {
+	if err := saveAllRegisteredUser(); err != nil {
+		agendaLogger.Println(err.Error())
+		return err
+	}
+	if err := saveAllMeeting(); err != nil {
 		agendaLogger.Println(err.Error())
 		return err
 	}
@@ -38,6 +78,13 @@ func loadConfig() {
 	if err != nil {
 		log.Fatalf("Load config fail, for config path: %v\n", config.AgendaConfigPath())
 	}
+
+	if info, err := fcfg.Stat(); err != nil {
+		log.Fatal(err)
+	} else if info.Size() == 0 {
+		return
+	}
+
 	decoder := json.NewDecoder(fcfg)
 
 	config.LoadConfig(decoder)
@@ -52,16 +99,23 @@ func saveConfig() error {
 	return config.SaveConfig(encoder)
 }
 
-func loadRegisteredUserList() {
+func loadAllRegisteredUser() {
 	fin, err := os.Open(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if info, err := fin.Stat(); err != nil {
+		log.Fatal(err)
+	} else if info.Size() == 0 {
+		return
+	}
+
 	decoder := json.NewDecoder(fin)
 
 	entity.LoadUsersAllRegistered(decoder)
 }
-func saveRegisteredUserList() error {
+func saveAllRegisteredUser() error {
 	fout, err := os.Create(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)
@@ -69,6 +123,36 @@ func saveRegisteredUserList() error {
 	encoder := json.NewEncoder(fout)
 
 	if err := entity.SaveUsersAllRegistered(encoder); err != nil {
+		log.Printf(err.Error()) // TODO: hadnle ?
+		return err
+	}
+	return nil
+}
+
+func loadAllMeeting() {
+	fin, err := os.Open(config.MeetingDataPath())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if info, err := fin.Stat(); err != nil {
+		log.Fatal(err)
+	} else if info.Size() == 0 {
+		return
+	}
+
+	decoder := json.NewDecoder(fin)
+
+	entity.LoadAllMeeting(decoder)
+}
+func saveAllMeeting() error {
+	fout, err := os.Create(config.MeetingDataPath())
+	if err != nil {
+		log.Fatal(err)
+	}
+	encoder := json.NewEncoder(fout)
+
+	if err := entity.SaveAllMeeting(encoder); err != nil {
 		log.Printf(err.Error()) // TODO: hadnle ?
 		return err
 	}
