@@ -64,8 +64,7 @@ var searchCmd = &cobra.Command{
 			}
 		}
 
-		// fmt.Println("search called by " + userFlagBool)
-		// fmt.Println("register with info password: " + meetingFlagBool)
+		
 
 		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
 
@@ -93,5 +92,7 @@ func init() {
 
 	searchCmd.Flags().BoolP("user", "u", false, "search users")
 	searchCmd.Flags().BoolP("meeting", "m", false, "search meeting")
+	searchCmd.Flags().StringP("startTime", "s", "", "search startTime")
+	searchCmd.Flags().StringP("endTime", "e", "", "search endTime")
 
 }
