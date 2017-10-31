@@ -15,3 +15,15 @@ func init() {
 	}
 	Logger = log.New(flog, "logger: ", log.Llongfile)
 }
+
+var (
+	Print   = Logger.Print
+	Printf  = Logger.Printf
+	Println = Logger.Println
+	Fatal   = Logger.Fatal
+	Fatalf  = Logger.Fatalf
+	Fatalln = Logger.Fatalln
+	Panic   = Logger.Panic
+	Panicf  = Logger.Panicf
+	Panicln = Logger.Panicln
+)

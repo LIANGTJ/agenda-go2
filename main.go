@@ -1,36 +1,31 @@
 package main
 
 import (
+	"agenda"
+	"config"
 	"entity"
 	"fmt"
-	"log"
-	"model"
-	"os"
+	"util"
 
 	cmd "github.com/Binly42/agenda-go/cmd"
 	// "github.com/spf13/cobra"
 )
 
-// var logln = util.Log
-// var logf = util.Logf
+var logln = util.Log
+var logf = util.Logf
 
 func init() {
-	// flags ?
 }
 
 func main() {
-	// p := packer.NewOne()
-	// m := entity.Meeting
-	// agenda.work()
+	agenda.LoadAll()
+	defer agenda.SaveAll()
 
-	model.Load()
-
-	log.Printf("Users:  %+v\n", entity.GetAllUsersRegistered())
-	log.Printf("Config: %+v\n", entity.Config)
+	logf("Users:  %+v\n", entity.GetAllUsersRegistered())
+	logf("Config: %+v\n", config.Config)
 
 	if err := cmd.RootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		// os.Exit(1) FIXME:
 	}
-
 }
