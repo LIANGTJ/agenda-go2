@@ -4,7 +4,6 @@ import (
 	"auth"
 	"convention/agendaerror"
 	"convention/codec"
-	"log"
 	"time"
 	log "util/logger"
 )
@@ -41,6 +40,8 @@ func (name Username) RefInAllUsers() *User {
 func GetAllUsersRegistered() *UserList {
 	return &allUsersRegistered
 }
+
+type UserIdentifierList []Username
 
 type UserInfoPublic struct {
 	Name Username
@@ -183,28 +184,14 @@ func (u *User) AddParticipatorToMeeting(meeting *Meeting, user *User) error {
 }
 
 // RemoveParticipatorFromMeeting just as its name
-func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
+func (u *User) RemoveParticipatorFromMeeting(meeting *Meeting, user *User) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
 
-	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
-	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
-	}
-	if user == nil {
-		return agendaerror.ErrUserNotRegistered
-	}
-
-	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
-	}
-
-	if !meeting.ContainsParticipator(name) {
-		return agendaerror.ErrUserNotFound
-	}
-
-	return meeting.Exclude(user)
+	err := meeting.Exclude(user)
+	log.Printf("User %v removes participator %v from Meeting %v.", u.Name, user.Name, meeting.Title)
+	return err
 }
 
 // LogOut log out User's own (current working) account
@@ -349,6 +336,17 @@ func LoadUserList(decoder codec.Decoder, ul *UserList) {
 		if err := ul.Add(u); err != nil {
 			log.Printf(err.Error())
 		}
+	}
+}
+
+// InitFrom loads UserList in-place from given UserIdentifierList; Just like `init`
+func (ul *UserList) InitFrom(li UserIdentifierList) {
+	// clear ...
+	ul.Users = NewUserList().Users
+
+	for _, id := range li {
+		u := id.RefInAllUsers() // CHECK: ditto
+		ul.Add(u)
 	}
 }
 

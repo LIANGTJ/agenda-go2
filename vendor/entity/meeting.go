@@ -85,6 +85,7 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 	// CHECK: Need ensure Sponsor not nil ?
 	info.Sponsor = infoSerial.Sponsor.RefInAllUsers()
 
+	// TODO: TODEL:
 	for _, name := range infoSerial.Participators {
 		u := name.RefInAllUsers() // CHECK: ditto
 		info.Participators.Add(u)

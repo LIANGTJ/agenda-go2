@@ -4,6 +4,7 @@ import (
 	"convention/agendaerror"
 	"entity"
 	"model"
+	"time"
 	log "util/logger"
 )
 
@@ -31,9 +32,10 @@ func MakeMeetingInfo(title MeetingTitle, sponsor Username, participators []Usern
 	info := MeetingInfo{}
 
 	info.Title = title
-	info.Sponsor = sponsor
-	info.Participators =
-	info.Phone = phone
+	info.Sponsor = sponsor.RefInAllUsers()
+	info.Participators.InitFrom(participators)
+	info.StartTime = startTime
+	info.EndTime = endTime
 
 	return info
 }
@@ -116,7 +118,9 @@ func CancelAccount(name Username) error {
 }
 
 // SponsorMeeting creates a meeting
-func SponsorMeeting(info MeetingInfo) (*Meeting, error) {
+func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
+	info := mInfo
+
 	// NOTE: dev-assert
 	if info.Sponsor != nil && info.Sponsor.Name != LoginedUser().Name {
 		log.Fatalf("User %v is creating a meeting with Sponsor %v\n", LoginedUser().Name, info.Sponsor.Name)
@@ -157,12 +161,12 @@ func SponsorMeeting(info MeetingInfo) (*Meeting, error) {
 
 	m, err := LoginedUser().SponsorMeeting(info)
 	if err != nil {
-		log.Printf("User %v failed to sponsor meeting, error: %q", u.Name, err.Error())
+		log.Printf("Failed to sponsor meeting, error: %q", err.Error())
 	}
 	return m, err
 }
 
-// AddParticipatorToMeeting just as its name
+// AddParticipatorToMeeting ...
 func AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 	u := LoginedUser()
 
@@ -193,7 +197,39 @@ func AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 
 	err := u.AddParticipatorToMeeting(meeting, user)
 	if err != nil {
-		log.Printf("User %v failed to add participator %v into Meeting %v, error: %q", u.Name, user.Name, meeting.Title, err.Error())
+		log.Printf("Failed to add participator into Meeting, error: %q", err.Error())
+	}
+	return err
+}
+
+// RemoveParticipatorFromMeeting ...
+func RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
+	u := LoginedUser()
+
+	// check if under login status, TODO: check the login status
+	if u == nil {
+		return agendaerror.ErrUserNotLogined
+	}
+
+	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
+	if meeting == nil {
+		return agendaerror.ErrMeetingNotFound
+	}
+	if user == nil {
+		return agendaerror.ErrUserNotRegistered
+	}
+
+	if !meeting.SponsoredBy(u.Name) {
+		return agendaerror.ErrSponsorAuthority
+	}
+
+	if !meeting.ContainsParticipator(name) {
+		return agendaerror.ErrUserNotFound
+	}
+
+	err := u.RemoveParticipatorFromMeeting(meeting, user)
+	if err != nil {
+		log.Printf("Failed to remove participator from Meeting, error: %q", err.Error())
 	}
 	return err
 }
