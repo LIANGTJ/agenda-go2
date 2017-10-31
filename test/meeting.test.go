@@ -2,10 +2,10 @@ package main
 
 // import "errors"
 import (
+	"config"
 	"encoding/json"
 	"entity"
 	"log"
-	"model"
 	"os"
 	"time"
 	"util"
@@ -22,8 +22,13 @@ func count() {
 	counter += 1
 }
 
+var (
+	meetingDataPath = config.MeetingDataPath()
+	meetingTestPath = config.MeetingTestPath()
+)
+
 func main() {
-	fin, err := os.Open(model.MeetingDataPath())
+	fin, err := os.Open(meetingDataPath)
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +70,7 @@ func main() {
 		m, _ := ml.PickOut("bb")
 		logf("ml.Size(): %v ---> %v, m: %+v", oldSize, ml.Size(), m)
 
-		fout, err := os.Create(model.MeetingTestPath())
+		fout, err := os.Create(meetingTestPath)
 		if err != nil {
 			panic(err)
 		}
@@ -74,7 +79,7 @@ func main() {
 	}
 
 	// os.MkdirAll(util.WorkingDir(), 0777)
-	fout, err := os.Create(model.MeetingDataPath())
+	fout, err := os.Create(meetingDataPath)
 	if err != nil {
 		log.Println(err)
 	}

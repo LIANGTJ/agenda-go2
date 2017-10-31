@@ -2,32 +2,24 @@ package util
 
 import (
 	"log"
-	"os"
+	"util/logger"
 )
 
 var (
-	Log  = log.Println
-	Logf = log.Printf
-	// Log  = func(args ...interface{}) {}
-	// Logf = func(args ...interface{}) {}
+	Logger = logger.Logger
 )
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
+var (
+	Log  = log.Println
+	Logf = log.Printf
+
+// Log  = func(args ...interface{}) {}
+// Logf = func(args ...interface{}) {}
+)
+
 // Params support named-paaram
 type Params = map[string](interface{})
-
-var DebugMode = true
-
-// WorkingDir for agenda.
-func WorkingDir() string {
-	location, existed := os.LookupEnv("HOME")
-	if !existed || DebugMode {
-		location = "."
-	}
-	// NOTE: here to ensure workingdir existed ?
-	ret := location + "/.agenda.d/"
-	return ret
-}

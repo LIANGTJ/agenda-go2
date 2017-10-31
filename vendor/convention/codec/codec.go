@@ -1,4 +1,4 @@
-package entity
+package codec
 
 type Encoder interface {
 	Encode(v interface{}) error

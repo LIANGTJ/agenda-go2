@@ -1,11 +1,13 @@
 package entity
 
 import (
+	"convention/codec"
+	"convention/err"
 	"log"
 	"time"
 )
 
-// util.Identifier
+// Identifier
 type MeetingTitle string
 
 func (t *MeetingTitle) Empty() bool {
@@ -141,7 +143,7 @@ func NewMeeting(info MeetingInfo) *Meeting {
 	return m
 }
 
-func LoadMeeting(decoder Decoder, m *Meeting) {
+func LoadMeeting(decoder codec.Decoder, m *Meeting) {
 	mInfoSerial := new(MeetingInfoSerializable)
 
 	err := decoder.Decode(mInfoSerial)
@@ -150,13 +152,13 @@ func LoadMeeting(decoder Decoder, m *Meeting) {
 	}
 	m.MeetingInfo = *(mInfoSerial.Deserialize())
 }
-func LoadedMeeting(decoder Decoder) *Meeting {
+func LoadedMeeting(decoder codec.Decoder) *Meeting {
 	m := new(Meeting)
 	LoadMeeting(decoder, m)
 	return m
 }
 
-func (m *Meeting) Save(encoder Encoder) error {
+func (m *Meeting) Save(encoder codec.Encoder) error {
 	return encoder.Encode(*m.MeetingInfo.Serialize())
 }
 
@@ -218,7 +220,7 @@ func NewMeetingList() *MeetingList {
 	return ml
 }
 
-func LoadMeetingList(decoder Decoder, ml *MeetingList) {
+func LoadMeetingList(decoder codec.Decoder, ml *MeetingList) {
 	// for decoder.More() {
 	// 	meeting := LoadedMeeting(decoder)
 	// 	if err := ml.Add(meeting); err != nil {
@@ -236,11 +238,11 @@ func LoadMeetingList(decoder Decoder, ml *MeetingList) {
 		}
 	}
 }
-func (ml *MeetingList) LoadFrom(decoder Decoder) {
+func (ml *MeetingList) LoadFrom(decoder codec.Decoder) {
 	LoadMeetingList(decoder, ml)
 }
 
-func LoadedMeetingList(decoder Decoder) *MeetingList {
+func LoadedMeetingList(decoder codec.Decoder) *MeetingList {
 	ml := NewMeetingList()
 	LoadMeetingList(decoder, ml)
 	return ml
@@ -273,7 +275,7 @@ func (ml *MeetingList) Textualize() MeetingInfoListPrintable {
 	return ml.Serialize()
 }
 
-func (ml *MeetingList) Save(encoder Encoder) error {
+func (ml *MeetingList) Save(encoder codec.Encoder) error {
 	sl := ml.Serialize()
 	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
@@ -293,33 +295,33 @@ func (ml *MeetingList) Contains(title MeetingTitle) bool {
 
 func (ml *MeetingList) Add(meeting *Meeting) error {
 	if meeting == nil {
-		return ErrNilMeeting
+		return err.NilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
-		return ErrExistedMeeting
+		return err.ExistedMeeting
 	}
 	ml.Meetings[title] = meeting
 	return nil
 }
 func (ml *MeetingList) Remove(meeting *Meeting) error {
 	if meeting == nil {
-		return ErrNilMeeting
+		return err.NilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
 		delete(ml.Meetings, title) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
-	return ErrMeetingNotFound
+	return err.MeetingNotFound
 }
 func (ml *MeetingList) PickOut(title MeetingTitle) (*Meeting, error) {
 	if title.Empty() {
-		return nil, ErrEmptyMeetingTitle
+		return nil, err.EmptyMeetingTitle
 	}
 	m := ml.Ref(title)
 	if m == nil {
-		return nil, ErrMeetingNotFound
+		return nil, err.MeetingNotFound
 	}
 	defer ml.Remove(m)
 	return m, nil

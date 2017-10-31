@@ -2,11 +2,11 @@ package main
 
 // import "errors"
 import (
+	"config"
 	"encoding/json"
 	"entity"
 	"fmt"
 	"log"
-	"model"
 	"os"
 	"util"
 )
@@ -22,8 +22,13 @@ func count() {
 	counter += 1
 }
 
+var (
+	userDataPath = config.UserDataPath()
+	userTestPath = config.UserTestPath()
+)
+
 func main() {
-	fin, err := os.Open(model.UserDataPath())
+	fin, err := os.Open(userDataPath)
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +68,7 @@ func main() {
 		logf("ul.Size(): %v ---> %v, u: %+v", oldSize, ul.Size(), u)
 	}
 
-	// fout, err := os.Create(model.UserTestPath())
+	// fout, err := os.Create(userTestPath)
 	// if err != nil {
 	// 	panic(err)
 	// }
@@ -71,7 +76,7 @@ func main() {
 	// u.Save(encoder)
 
 	// os.MkdirAll(util.WorkingDir(), 0777)
-	fout, err := os.Create(model.UserDataPath())
+	fout, err := os.Create(userDataPath)
 	if err != nil {
 		log.Println(err)
 	}

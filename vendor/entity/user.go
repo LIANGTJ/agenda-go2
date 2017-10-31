@@ -2,15 +2,20 @@ package entity
 
 import (
 	"auth"
+	"convention/codec"
+	"convention/err"
 	"log"
 	"time"
+	agnedaLog "util/logger"
 )
+
+var agnedaLogger = agnedaLog.Logger
 
 // var logln = util.Log
 // var logf = util.Logf
 
 // Username represents username, a unique identifier, of User
-// util.Identifier
+// Identifier
 type Username string
 
 // Empty checks if Username empty
@@ -66,25 +71,20 @@ func NewUser(info UserInfo) *User {
 	return u
 }
 
-// RegisterUser ...
-func RegisterUser(u *User) error {
-	return GetAllUsersRegistered().Add(u)
-}
-
 // LoadUsersAllRegistered concretely loads all Registered Users
-func LoadUsersAllRegistered(decoder Decoder) {
+func LoadUsersAllRegistered(decoder codec.Decoder) {
 	users := &(allUsersRegistered)
 	LoadUserList(decoder, users)
 }
 
 // SaveUsersAllRegistered concretely saves all Registered Users
-func SaveUsersAllRegistered(encoder Encoder) error {
+func SaveUsersAllRegistered(encoder codec.Encoder) error {
 	users := &(allUsersRegistered)
 	return users.Save(encoder)
 }
 
 // LoadUser load a User into given container(u) from given decoder
-func LoadUser(decoder Decoder, u *User) {
+func LoadUser(decoder codec.Decoder, u *User) {
 	uInfo := new(UserInfo)
 	err := decoder.Decode(uInfo)
 	if err != nil {
@@ -94,14 +94,14 @@ func LoadUser(decoder Decoder, u *User) {
 }
 
 // LoadedUser returns loaded User from given decoder
-func LoadedUser(decoder Decoder) *User {
+func LoadedUser(decoder codec.Decoder) *User {
 	u := new(User)
 	LoadUser(decoder, u)
 	return u
 }
 
 // Save saves User with given encoder
-func (u *User) Save(encoder Encoder) error {
+func (u *User) Save(encoder codec.Encoder) error {
 	return encoder.Encode(u.UserInfo)
 }
 
@@ -128,7 +128,7 @@ func (u *User) FreeWhen(start, end time.Time) bool {
 		s1, e1 := m.StartTime, m.EndTime
 		s2, e2 := start, end
 		if s1.Before(e2) && e1.After(s2) {
-			return ErrConflictedTimeInterval
+			return err.ConflictedTimeInterval
 		}
 		return nil
 	}); err != nil {
@@ -141,37 +141,13 @@ func (u *User) FreeWhen(start, end time.Time) bool {
 
 // CancelAccount cancels(deletes) the User's own account
 func (u *User) CancelAccount() error {
-	// check if under login status  TODEL: this should be in `cmd` module, check the login status
-
-	// del all meeting that this user is sponsor
-	// remove this user from participators of all meeting that this user participate
-	//      if removing cause people count < 0, del the meeting
-	if err := GetAllMeetings().ForEach(func(m *Meeting) error {
-		if m.SponsoredBy(u.Name) {
-			return m.Dissolve()
-		}
-		if m.ContainsParticipator(u.Name) {
-			return m.Exclude(u)
-		}
-		return nil
-	}); err != nil {
-		log.Printf(err.Error())
-	}
-
-	if err := GetAllUsersRegistered().Remove(u); err != nil {
-		log.Printf(err.Error())
-	}
-	if err := u.LogOut(); err != nil {
-		log.Printf(err.Error())
-	}
-
-	// Notify("CancelAccount: OK.")  TODEL: this should be in `cmd` module, notify dependon error
-	return ErrNeedImplement
+	agnedaLogger.Printf("User %v cancels account.", u.Name)
+	return nil
 }
 
 // QueryAccount queries an account, where User as the actor
 func (u *User) QueryAccount() error {
-	return ErrNeedImplement
+	return err.NeedImplement
 }
 
 // QueryAccountAll queries all accounts, where User as the actor
@@ -188,16 +164,16 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 
 	// NOTE: repeat in MeetingList.Add ... DEL ?
 	if info.Title.RefInAllMeetings() != nil {
-		return nil, ErrExistedMeetingTitle
+		return nil, err.ExistedMeetingTitle
 	}
 
 	if !u.Registered() {
-		return nil, ErrUserNotRegistered
+		return nil, err.UserNotRegistered
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.Registered() {
-			return ErrUserNotRegistered
+			return err.UserNotRegistered
 		}
 		return nil
 	}); err != nil {
@@ -206,12 +182,12 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 	}
 
 	if !info.EndTime.After(info.StartTime) {
-		return nil, ErrInvalidTimeInterval
+		return nil, err.InvalidTimeInterval
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.FreeWhen(info.StartTime, info.EndTime) {
-			return ErrConflictedTimeInterval
+			return err.ConflictedTimeInterval
 		}
 		return nil
 	}); err != nil {
@@ -227,27 +203,27 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 // AddParticipatorToMeeting just as its name
 func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 	if u == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return ErrNilMeeting
+		return err.NilMeeting
 	}
 	if user == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return ErrSponsorAuthority
+		return err.SponsorAuthority
 	}
 
 	if meeting.ContainsParticipator(name) {
-		return ErrExistedUser
+		return err.ExistedUser
 	}
 
 	if !user.FreeWhen(meeting.StartTime, meeting.EndTime) {
-		return ErrConflictedTimeInterval
+		return err.ConflictedTimeInterval
 	}
 
 	return meeting.Involve(user)
@@ -256,23 +232,23 @@ func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error
 // RemoveParticipatorFromMeeting just as its name
 func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
 	if u == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return ErrMeetingNotFound
+		return err.MeetingNotFound
 	}
 	if user == nil {
-		return ErrUserNotRegistered
+		return err.UserNotRegistered
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return ErrSponsorAuthority
+		return err.SponsorAuthority
 	}
 
 	if !meeting.ContainsParticipator(name) {
-		return ErrUserNotFound
+		return err.UserNotFound
 	}
 
 	return meeting.Exclude(user)
@@ -280,7 +256,7 @@ func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) 
 
 // LogOut log out User's own (current working) account
 func (u *User) LogOut() error {
-	return ErrNeedImplement
+	return err.NeedImplement
 }
 
 func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
@@ -288,21 +264,25 @@ func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrint
 }
 
 func (u *User) meetingsSponsored() ([]*Meeting, error) {
+<<<<<<< HEAD
 	return nil, ErrNeedImplement
+=======
+	return nil, err.NeedImplement
+>>>>>>> eb20b87c08532d9f8f3461e2abd9838fce1a9018
 }
 
 // CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
 func (u *User) CancelMeeting(title MeetingTitle) error {
 	if u == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return ErrMeetingNotFound
+		return err.MeetingNotFound
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return ErrSponsorAuthority
+		return err.SponsorAuthority
 	}
 
 	return meeting.Dissolve()
@@ -312,19 +292,19 @@ func (u *User) CancelMeeting(title MeetingTitle) error {
 // CHECK: what to do in case User is the sponsor ?
 func (u *User) QuitMeeting(title MeetingTitle) error {
 	if u == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return ErrMeetingNotFound
+		return err.MeetingNotFound
 	}
 
 	if meeting.SponsoredBy(u.Name) {
-		return ErrSponsorResponsibility // NOTE: ???
+		return err.SponsorResponsibility // NOTE: ???
 	}
 
 	if !meeting.ContainsParticipator(u.Name) {
-		return ErrUserNotFound
+		return err.UserNotFound
 	}
 
 	return meeting.Exclude(u)
@@ -403,7 +383,7 @@ func NewUserList() *UserList {
 // CHECK: Need in-place load method ?
 
 // LoadUserList loads a UserList into given container(ul) from given decoder
-func LoadUserList(decoder Decoder, ul *UserList) {
+func LoadUserList(decoder codec.Decoder, ul *UserList) {
 	// CHECK: Need clear ul ?
 	// for decoder.More() {
 	// 	user := LoadedUser(decoder)
@@ -424,12 +404,12 @@ func LoadUserList(decoder Decoder, ul *UserList) {
 }
 
 // LoadFrom loads UserList in-place from given decoder; Just like `init`
-func (ul *UserList) LoadFrom(decoder Decoder) {
+func (ul *UserList) LoadFrom(decoder codec.Decoder) {
 	LoadUserList(decoder, ul)
 }
 
 // LoadedUserList returns loaded UserList from given decoder
-func LoadedUserList(decoder Decoder) *UserList {
+func LoadedUserList(decoder codec.Decoder) *UserList {
 	ul := NewUserList()
 	LoadUserList(decoder, ul)
 	return ul
@@ -460,7 +440,7 @@ func (ul *UserList) Infos() UserInfoList {
 }
 
 // Save use given encoder to Save UserList
-func (ul *UserList) Save(encoder Encoder) error {
+func (ul *UserList) Save(encoder codec.Encoder) error {
 	sl := ul.Serialize()
 	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
@@ -485,11 +465,11 @@ func (ul *UserList) Contains(name Username) bool {
 // Add just add
 func (ul *UserList) Add(user *User) error {
 	if user == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 	name := user.Name
 	if ul.Contains(name) {
-		return ErrExistedUser
+		return err.ExistedUser
 	}
 	ul.Users[name] = user
 	return nil
@@ -498,24 +478,24 @@ func (ul *UserList) Add(user *User) error {
 // Remove just remove
 func (ul *UserList) Remove(user *User) error {
 	if user == nil {
-		return ErrNilUser
+		return err.NilUser
 	}
 	name := user.Name
 	if ul.Contains(name) {
 		delete(ul.Users, name) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
-	return ErrUserNotFound
+	return err.UserNotFound
 }
 
 // PickOut =~= Ref and then Remove
 func (ul *UserList) PickOut(name Username) (*User, error) {
 	if name.Empty() {
-		return nil, ErrEmptyUsername
+		return nil, err.EmptyUsername
 	}
 	u := ul.Ref(name)
 	if u == nil {
-		return u, ErrUserNotFound
+		return u, err.UserNotFound
 	}
 	defer ul.Remove(u)
 	return u, nil
