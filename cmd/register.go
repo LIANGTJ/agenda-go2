@@ -18,6 +18,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"agenda"
 )
 
 // registerCmd represents the register command
@@ -41,6 +43,12 @@ to quickly create a Cobra application.`,
 		fmt.Println("register with info password: " + password)
 		fmt.Println("register with info email: " + email)
 		fmt.Println("register with info phone: " + phone)
+
+		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
+
+		if err := agenda.RegisterUser(info); err != nil {
+			panic(err)
+		}
 	},
 }
 
@@ -59,7 +67,7 @@ func init() {
 
 	registerCmd.Flags().StringP("username", "u", "Anonymous", "register info for username")
 	registerCmd.Flags().StringP("password", "p", "", "register info for password")
-	registerCmd.Flags().StringP("email", "e", "", "register info for email")
+	registerCmd.Flags().StringP("email", "m", "", "register info for email")
 	registerCmd.Flags().StringP("phone", "t", "", "register info for phone")
 
 }

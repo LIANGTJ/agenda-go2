@@ -12,6 +12,8 @@ import (
 // var logln = util.Log
 // var logf = util.Logf
 
+type Auth auth.Auth
+
 // Username represents username, a unique identifier, of User
 // Identifier
 type Username string
@@ -40,12 +42,18 @@ func GetAllUsersRegistered() *UserList {
 	return &allUsersRegistered
 }
 
-// UserInfo represents the informations of a User
-type UserInfo struct {
-	Name  Username
-	Auth  auth.Auth
+type UserInfoPublic struct {
+	Name Username
+
 	Mail  string
 	Phone string
+}
+
+// UserInfo represents the informations of a User
+type UserInfo struct {
+	UserInfoPublic
+
+	Auth Auth
 }
 
 // UserInfoSerializable represents serializable UserInfo
@@ -149,8 +157,8 @@ func (u *User) QueryAccount() error {
 }
 
 // QueryAccountAll queries all accounts, where User as the actor
-func (u *User) QueryAccountAll() UserInfoList {
-	return GetAllUsersRegistered().Infos()
+func (u *User) QueryAccountAll() UserInfoPublicList {
+	return GetAllUsersRegistered().PublicInfos()
 }
 
 // CreateMeeting creates a meeting, where User as the actor
@@ -315,7 +323,7 @@ type UserList struct {
 // NOTE: these type may be modified/removed in future
 type UserListRaw = []*User
 
-type UserInfoList []UserInfo
+type UserInfoPublicList []UserInfoPublic
 
 // UserInfoListSerializable represents a list of serializable UserInfo
 type UserInfoListSerializable []UserInfoSerializable
@@ -411,14 +419,14 @@ func LoadedUserList(decoder codec.Decoder) *UserList {
 
 func (ul *UserList) identifiers() []Username {
 	ret := make([]Username, 0, ul.Size())
-	for _, u := range ul.Infos() {
+	for _, u := range ul.PublicInfos() {
 		ret = append(ret, u.Name)
 	}
 	return ret
 }
-func (ul *UserList) Infos() UserInfoList {
+func (ul *UserList) PublicInfos() UserInfoPublicList {
 	users := ul.Slice()
-	ret := make(UserInfoList, 0, ul.Size())
+	ret := make(UserInfoPublicList, 0, ul.Size())
 
 	for _, u := range users {
 
@@ -428,7 +436,7 @@ func (ul *UserList) Infos() UserInfoList {
 			continue
 		}
 
-		ret = append(ret, u.UserInfo)
+		ret = append(ret, u.UserInfoPublic)
 	}
 	return ret
 }
