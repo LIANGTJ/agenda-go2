@@ -1,8 +1,8 @@
 package entity
 
 import (
+	"convention/agendaerror"
 	"convention/codec"
-	"convention/err"
 	"log"
 	"time"
 )
@@ -295,33 +295,33 @@ func (ml *MeetingList) Contains(title MeetingTitle) bool {
 
 func (ml *MeetingList) Add(meeting *Meeting) error {
 	if meeting == nil {
-		return err.NilMeeting
+		return agendaerror.NilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
-		return err.ExistedMeeting
+		return agendaerror.ExistedMeeting
 	}
 	ml.Meetings[title] = meeting
 	return nil
 }
 func (ml *MeetingList) Remove(meeting *Meeting) error {
 	if meeting == nil {
-		return err.NilMeeting
+		return agendaerror.NilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
 		delete(ml.Meetings, title) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
-	return err.MeetingNotFound
+	return agendaerror.MeetingNotFound
 }
 func (ml *MeetingList) PickOut(title MeetingTitle) (*Meeting, error) {
 	if title.Empty() {
-		return nil, err.EmptyMeetingTitle
+		return nil, agendaerror.EmptyMeetingTitle
 	}
 	m := ml.Ref(title)
 	if m == nil {
-		return nil, err.MeetingNotFound
+		return nil, agendaerror.MeetingNotFound
 	}
 	defer ml.Remove(m)
 	return m, nil

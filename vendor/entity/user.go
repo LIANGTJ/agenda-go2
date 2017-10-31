@@ -2,8 +2,8 @@ package entity
 
 import (
 	"auth"
+	"convention/agendaerror"
 	"convention/codec"
-	"convention/err"
 	"log"
 	"time"
 	agnedaLog "util/logger"
@@ -128,7 +128,7 @@ func (u *User) FreeWhen(start, end time.Time) bool {
 		s1, e1 := m.StartTime, m.EndTime
 		s2, e2 := start, end
 		if s1.Before(e2) && e1.After(s2) {
-			return err.ConflictedTimeInterval
+			return agendaerror.ConflictedTimeInterval
 		}
 		return nil
 	}); err != nil {
@@ -147,7 +147,7 @@ func (u *User) CancelAccount() error {
 
 // QueryAccount queries an account, where User as the actor
 func (u *User) QueryAccount() error {
-	return err.NeedImplement
+	return agendaerror.NeedImplement
 }
 
 // QueryAccountAll queries all accounts, where User as the actor
@@ -164,16 +164,16 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 
 	// NOTE: repeat in MeetingList.Add ... DEL ?
 	if info.Title.RefInAllMeetings() != nil {
-		return nil, err.ExistedMeetingTitle
+		return nil, agendaerror.ExistedMeetingTitle
 	}
 
 	if !u.Registered() {
-		return nil, err.UserNotRegistered
+		return nil, agendaerror.UserNotRegistered
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.Registered() {
-			return err.UserNotRegistered
+			return agendaerror.UserNotRegistered
 		}
 		return nil
 	}); err != nil {
@@ -182,12 +182,12 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 	}
 
 	if !info.EndTime.After(info.StartTime) {
-		return nil, err.InvalidTimeInterval
+		return nil, agendaerror.InvalidTimeInterval
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.FreeWhen(info.StartTime, info.EndTime) {
-			return err.ConflictedTimeInterval
+			return agendaerror.ConflictedTimeInterval
 		}
 		return nil
 	}); err != nil {
@@ -203,27 +203,27 @@ func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
 // AddParticipatorToMeeting just as its name
 func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 	if u == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return err.NilMeeting
+		return agendaerror.NilMeeting
 	}
 	if user == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return err.SponsorAuthority
+		return agendaerror.SponsorAuthority
 	}
 
 	if meeting.ContainsParticipator(name) {
-		return err.ExistedUser
+		return agendaerror.ExistedUser
 	}
 
 	if !user.FreeWhen(meeting.StartTime, meeting.EndTime) {
-		return err.ConflictedTimeInterval
+		return agendaerror.ConflictedTimeInterval
 	}
 
 	return meeting.Involve(user)
@@ -232,23 +232,23 @@ func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error
 // RemoveParticipatorFromMeeting just as its name
 func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
 	if u == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return err.MeetingNotFound
+		return agendaerror.MeetingNotFound
 	}
 	if user == nil {
-		return err.UserNotRegistered
+		return agendaerror.UserNotRegistered
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return err.SponsorAuthority
+		return agendaerror.SponsorAuthority
 	}
 
 	if !meeting.ContainsParticipator(name) {
-		return err.UserNotFound
+		return agendaerror.UserNotFound
 	}
 
 	return meeting.Exclude(user)
@@ -256,7 +256,7 @@ func (u *User) RemoveParticipatorFromMeeting(title MeetingTitle, name Username) 
 
 // LogOut log out User's own (current working) account
 func (u *User) LogOut() error {
-	return err.NeedImplement
+	return agendaerror.NeedImplement
 }
 
 func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
@@ -264,21 +264,21 @@ func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrint
 }
 
 func (u *User) meetingsSponsored() ([]*Meeting, error) {
-	return nil, err.NeedImplement
+	return nil, agendaerror.NeedImplement
 }
 
 // CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
 func (u *User) CancelMeeting(title MeetingTitle) error {
 	if u == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return err.MeetingNotFound
+		return agendaerror.MeetingNotFound
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return err.SponsorAuthority
+		return agendaerror.SponsorAuthority
 	}
 
 	return meeting.Dissolve()
@@ -288,19 +288,19 @@ func (u *User) CancelMeeting(title MeetingTitle) error {
 // CHECK: what to do in case User is the sponsor ?
 func (u *User) QuitMeeting(title MeetingTitle) error {
 	if u == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return err.MeetingNotFound
+		return agendaerror.MeetingNotFound
 	}
 
 	if meeting.SponsoredBy(u.Name) {
-		return err.SponsorResponsibility // NOTE: ???
+		return agendaerror.SponsorResponsibility // NOTE: ???
 	}
 
 	if !meeting.ContainsParticipator(u.Name) {
-		return err.UserNotFound
+		return agendaerror.UserNotFound
 	}
 
 	return meeting.Exclude(u)
@@ -461,11 +461,11 @@ func (ul *UserList) Contains(name Username) bool {
 // Add just add
 func (ul *UserList) Add(user *User) error {
 	if user == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 	name := user.Name
 	if ul.Contains(name) {
-		return err.ExistedUser
+		return agendaerror.ExistedUser
 	}
 	ul.Users[name] = user
 	return nil
@@ -474,24 +474,24 @@ func (ul *UserList) Add(user *User) error {
 // Remove just remove
 func (ul *UserList) Remove(user *User) error {
 	if user == nil {
-		return err.NilUser
+		return agendaerror.NilUser
 	}
 	name := user.Name
 	if ul.Contains(name) {
 		delete(ul.Users, name) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
-	return err.UserNotFound
+	return agendaerror.UserNotFound
 }
 
 // PickOut =~= Ref and then Remove
 func (ul *UserList) PickOut(name Username) (*User, error) {
 	if name.Empty() {
-		return nil, err.EmptyUsername
+		return nil, agendaerror.EmptyUsername
 	}
 	u := ul.Ref(name)
 	if u == nil {
-		return u, err.UserNotFound
+		return u, agendaerror.UserNotFound
 	}
 	defer ul.Remove(u)
 	return u, nil

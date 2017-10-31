@@ -1,6 +1,7 @@
 package agenda
 
 import (
+	"convention/agendaerror"
 	"entity"
 	"log"
 )
@@ -15,6 +16,10 @@ var allMeetings = entity.GetAllMeetings()
 
 // NOTE: Now, assume the operations' actor are always the `Current User`
 
+func LoginedUser() *User {
+
+}
+
 // RegisterUser ...
 func RegisterUser(u *entity.User) error {
 
@@ -24,8 +29,14 @@ func RegisterUser(u *entity.User) error {
 
 // CancelAccount cancels(deletes) a User's account
 func CancelAccount(name Username) error {
-	// check if under login status, TODO: check the login status
 	u := name.RefInAllUsers()
+
+	// check if under login status, TODO: check the login status
+	if logined := LoginedUser(); logined == nil {
+		return agendaerror.UserNotLogined
+	} else if logined != u {
+		return agendaerror.UserAuthority
+	}
 
 	// del all meeting that this user is sponsor
 	// remove this user from participators of all meeting that this user participate
