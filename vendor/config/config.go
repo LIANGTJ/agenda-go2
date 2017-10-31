@@ -56,6 +56,7 @@ var neededFilepaths = []string{
 	UserDataRegisteredPath(),
 	MeetingDataPath(),
 	AgendaConfigPath(),
+	UserLoginStatusPath(),
 }
 
 func NeededFilepaths() []string {
@@ -70,6 +71,8 @@ func UserDataRegisteredPath() string { return WorkingDir() + "user-registered.js
 func MeetingDataPath() string        { return WorkingDir() + "meeting-data.json" }
 
 func AgendaConfigPath() string { return WorkingDir() + "config.json" }
+
+func UserLoginStatusPath() string { return WorkingDir() + "curUser.txt" }
 
 func BackupDir() string {
 	return WorkingDir() + "backup/"

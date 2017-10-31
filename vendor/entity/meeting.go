@@ -10,12 +10,15 @@ import (
 // Identifier
 type MeetingTitle string
 
-func (t *MeetingTitle) Empty() bool {
-	return *t == ""
+func (t MeetingTitle) Empty() bool {
+	return t == ""
 }
-func (t *MeetingTitle) Valid() bool {
+func (t MeetingTitle) Valid() bool {
 	// FIXME: not only !empty
 	return !t.Empty()
+}
+func (t MeetingTitle) String() string {
+	return string(t)
 }
 
 // TODO: Not sure where to place ...

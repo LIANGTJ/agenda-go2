@@ -11,8 +11,6 @@ import (
 // var logln = util.Log
 // var logf = util.Logf
 
-type Auth auth.Auth
-
 // Username represents username, a unique identifier, of User
 // Identifier
 type Username string
@@ -26,6 +24,10 @@ func (name Username) Empty() bool {
 func (name Username) Valid() bool {
 	// FIXME: not only !empty
 	return !name.Empty()
+}
+
+func (name Username) String() string {
+	return string(name)
 }
 
 // TODO: Not sure where to place ...
@@ -49,6 +51,8 @@ type UserInfoPublic struct {
 	Mail  string
 	Phone string
 }
+
+type Auth = auth.Auth
 
 // UserInfo represents the informations of a User
 type UserInfo struct {
@@ -153,10 +157,13 @@ func (u *User) QueryAccount() error {
 
 // QueryAccountAll queries all accounts, where User as the actor
 func (u *User) QueryAccountAll() UserInfoPublicList {
-	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
-	// Hence, now if so, agenda would crash for `Nil.Name`
+	// NOTE: whatever, temporarily ignore the problem that the actor of query is Nil
+	username := Username("Anonymous")
+	if u != nil {
+		username = u.Name
+	}
 	ret := GetAllUsersRegistered().PublicInfos()
-	log.Printf("User %v queries all accounts.", u.Name)
+	log.Printf("User %v queries all accounts.", username)
 	return ret
 }
 
@@ -206,14 +213,19 @@ func (u *User) LogOut() error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	return agendaerror.ErrNeedImplement
+
+	log.Printf("User %v logs out.", u.Name)
+	return nil
 }
 
 func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
 	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
-	// Hence, now if so, agenda would crash for `Nil.Name`
+	username := Username("Anonymous")
+	if u != nil {
+		username = u.Name
+	}
 	ret := u.involvedMeetings().Textualize()
-	log.Printf("User %v queries meetings in time interval %v ~ %v.", u.Name, start, end)
+	log.Printf("User %v queries meetings in time interval %v ~ %v.", username, start, end)
 	return ret
 }
 

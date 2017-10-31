@@ -1,7 +1,7 @@
 package agenda
 
 import (
-	"convention/agendaerror"
+	errors "convention/agendaerror"
 	"entity"
 	"model"
 	"time"
@@ -48,19 +48,16 @@ var allMeetings = entity.GetAllMeetings()
 
 func LoadAll() {
 	model.Load()
+	LoadLoginStatus()
 }
 func SaveAll() {
 	if err := model.Save(); err != nil {
 		log.Printf(err.Error())
 	}
+	SaveLoginStatus()
 }
 
 // NOTE: Now, assume the operations' actor are always the `Current User`
-
-func LoginedUser() *User {
-	name := Username("root")
-	return name.RefInAllUsers()
-}
 
 // RegisterUser ...
 // func RegisterUser(username, password, email, phone string) error {
@@ -69,6 +66,47 @@ func LoginedUser() *User {
 func RegisterUser(uInfo UserInfo) error {
 	u := NewUser(uInfo)
 	err := entity.GetAllUsersRegistered().Add(u)
+	return err
+}
+
+func LogIn(name Username, auth Auth) error {
+	u := name.RefInAllUsers()
+	if u == nil {
+		return errors.ErrNilUser
+	}
+
+	log.Printf("User %v logs in.", name)
+
+	if LoginedUser() != nil {
+		return errors.ErrLoginedUserAuthority
+	}
+
+	if verified := u.Auth.Verify(auth); !verified {
+		return errors.ErrFailedAuth
+	}
+
+	loginedUser = name
+
+	return nil
+}
+
+// LogOut log out User's own (current working) account
+// TODO:
+func LogOut(name Username) error {
+	u := name.RefInAllUsers()
+
+	// check if under login status, TODO: check the login status
+	if logined := LoginedUser(); logined == nil {
+		return errors.ErrUserNotLogined
+	} else if logined != u {
+		return errors.ErrUserAuthority
+	}
+
+	err := u.LogOut()
+	if err != nil {
+		log.Printf("Failed to log out, error: %q", err.Error())
+	}
+	loginedUser = ""
 	return err
 }
 
@@ -86,9 +124,9 @@ func CancelAccount(name Username) error {
 
 	// check if under login status, TODO: check the login status
 	if logined := LoginedUser(); logined == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	} else if logined != u {
-		return agendaerror.ErrUserAuthority
+		return errors.ErrUserAuthority
 	}
 
 	// del all meeting that this user is sponsor
@@ -130,16 +168,16 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 
 	// NOTE: repeat in MeetingList.Add ... DEL ?
 	if info.Title.RefInAllMeetings() != nil {
-		return nil, agendaerror.ErrExistedMeetingTitle
+		return nil, errors.ErrExistedMeetingTitle
 	}
 
 	if !LoginedUser().Registered() {
-		return nil, agendaerror.ErrUserNotRegistered
+		return nil, errors.ErrUserNotRegistered
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.Registered() {
-			return agendaerror.ErrUserNotRegistered
+			return errors.ErrUserNotRegistered
 		}
 		return nil
 	}); err != nil {
@@ -148,12 +186,12 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 	}
 
 	if !info.EndTime.After(info.StartTime) {
-		return nil, agendaerror.ErrInvalidTimeInterval
+		return nil, errors.ErrInvalidTimeInterval
 	}
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.FreeWhen(info.StartTime, info.EndTime) {
-			return agendaerror.ErrConflictedTimeInterval
+			return errors.ErrConflictedTimeInterval
 		}
 		return nil
 	}); err != nil {
@@ -174,27 +212,27 @@ func AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 
 	// check if under login status, TODO: check the login status
 	if u == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return agendaerror.ErrNilMeeting
+		return errors.ErrNilMeeting
 	}
 	if user == nil {
-		return agendaerror.ErrNilUser
+		return errors.ErrNilUser
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
+		return errors.ErrSponsorAuthority
 	}
 
 	if meeting.ContainsParticipator(name) {
-		return agendaerror.ErrExistedUser
+		return errors.ErrExistedUser
 	}
 
 	if !user.FreeWhen(meeting.StartTime, meeting.EndTime) {
-		return agendaerror.ErrConflictedTimeInterval
+		return errors.ErrConflictedTimeInterval
 	}
 
 	err := u.AddParticipatorToMeeting(meeting, user)
@@ -210,47 +248,28 @@ func RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
 
 	// check if under login status, TODO: check the login status
 	if u == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	}
 
 	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
 	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
+		return errors.ErrMeetingNotFound
 	}
 	if user == nil {
-		return agendaerror.ErrUserNotRegistered
+		return errors.ErrUserNotRegistered
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
+		return errors.ErrSponsorAuthority
 	}
 
 	if !meeting.ContainsParticipator(name) {
-		return agendaerror.ErrUserNotFound
+		return errors.ErrUserNotFound
 	}
 
 	err := u.RemoveParticipatorFromMeeting(meeting, user)
 	if err != nil {
 		log.Printf("Failed to remove participator from Meeting, error: %q", err.Error())
-	}
-	return err
-}
-
-// LogOut log out User's own (current working) account
-// TODO:
-func LogOut(name Username) error {
-	u := name.RefInAllUsers()
-
-	// check if under login status, TODO: check the login status
-	if logined := LoginedUser(); logined == nil {
-		return agendaerror.ErrUserNotLogined
-	} else if logined != u {
-		return agendaerror.ErrUserAuthority
-	}
-
-	err := u.LogOut()
-	if err != nil {
-		log.Printf("Failed to log out, error: %q", err.Error())
 	}
 	return err
 }
@@ -268,16 +287,16 @@ func CancelMeeting(title MeetingTitle) error {
 
 	// check if under login status, TODO: check the login status
 	if u == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	}
 
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
+		return errors.ErrMeetingNotFound
 	}
 
 	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
+		return errors.ErrSponsorAuthority
 	}
 
 	err := u.CancelMeeting(meeting)
@@ -293,22 +312,22 @@ func QuitMeeting(title MeetingTitle) error {
 
 	// check if under login status, TODO: check the login status
 	if u == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	}
 
 	meeting := title.RefInAllMeetings()
 	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
+		return errors.ErrMeetingNotFound
 	}
 
 	// CHECK: what to do in case User is exactly the sponsor ?
 	// for now, refuse that
 	if meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorResponsibility
+		return errors.ErrSponsorResponsibility
 	}
 
 	if !meeting.ContainsParticipator(u.Name) {
-		return agendaerror.ErrUserNotFound
+		return errors.ErrUserNotFound
 	}
 
 	err := u.QuitMeeting(meeting)
@@ -324,7 +343,7 @@ func ClearAllMeeting() error {
 
 	// check if under login status, TODO: check the login status
 	if u == nil {
-		return agendaerror.ErrUserNotLogined
+		return errors.ErrUserNotLogined
 	}
 
 	if err := allMeetings.ForEach(func(m *Meeting) error {

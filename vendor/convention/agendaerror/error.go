@@ -14,6 +14,9 @@ var (
 
 	ErrEmptyUsername = errors.New("given username cannot be empty")
 
+	ErrFailedAuth           = errors.New("auth verify failed.")
+	ErrLoginedUserAuthority = errors.New("only the User has logged in can modify login status.")
+
 	ErrUserAuthority = errors.New("only the User self can modify his/her account")
 
 	ErrSponsorAuthority      = errors.New("only the sponsor can modify the meeting")
@@ -29,7 +32,7 @@ var (
 
 	// Time
 	// InvalidTime         = errors.New("startTime/EndTime is not valid")
-	ErrInvalidTimeInterval    = errors.New("endTime must be after StartTime")
+	ErrInvalidTimeInterval    = errors.New("the EndTime must be after StartTime")
 	ErrConflictedTimeInterval = errors.New("given time interval conflicts with existed interval")
 
 	// Information

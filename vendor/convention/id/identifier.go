@@ -4,6 +4,7 @@ package id
 type Identifier interface {
 	Empty() bool
 	Vaild() bool
+	String() string
 }
 
 // // CHECK: EmptyIdentifier were unexported before planning to use Username/MeetingTitle as a stand-alone type.
