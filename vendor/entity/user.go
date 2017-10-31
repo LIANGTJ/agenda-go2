@@ -223,42 +223,25 @@ func (u *User) meetingsSponsored() ([]*Meeting, error) {
 }
 
 // CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
-func (u *User) CancelMeeting(title MeetingTitle) error {
+func (u *User) CancelMeeting(meeting *Meeting) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	meeting := title.RefInAllMeetings()
-	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
-	}
 
-	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
-	}
-
-	return meeting.Dissolve()
+	err := meeting.Dissolve()
+	log.Printf("User %v cancels Meeting %v.", u.Name, meeting.Title)
+	return err
 }
 
-// QuitMeeting quits from the given meeting, where User as the actor
-// CHECK: what to do in case User is the sponsor ?
-func (u *User) QuitMeeting(title MeetingTitle) error {
+// QuitMeeting let User quit the given meeting, where User as the actor
+func (u *User) QuitMeeting(meeting *Meeting) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	meeting := title.RefInAllMeetings()
-	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
-	}
 
-	if meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorResponsibility // NOTE: ???
-	}
-
-	if !meeting.ContainsParticipator(u.Name) {
-		return agendaerror.ErrUserNotFound
-	}
-
-	return meeting.Exclude(u)
+	err := meeting.Exclude(u)
+	log.Printf("User %v quits Meeting %v.", u.Name, meeting.Title)
+	return err
 }
 
 // ................................................................

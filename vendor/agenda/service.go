@@ -261,3 +261,80 @@ func QueryMeetingByInterval(start, end time.Time, name Username) entity.MeetingI
 	ret := LoginedUser().QueryMeetingByInterval(start, end)
 	return ret
 }
+
+// CancelMeeting cancels(deletes) the given meeting which sponsored by LoginedUser self
+func CancelMeeting(title MeetingTitle) error {
+	u := LoginedUser()
+
+	// check if under login status, TODO: check the login status
+	if u == nil {
+		return agendaerror.ErrUserNotLogined
+	}
+
+	meeting := title.RefInAllMeetings()
+	if meeting == nil {
+		return agendaerror.ErrMeetingNotFound
+	}
+
+	if !meeting.SponsoredBy(u.Name) {
+		return agendaerror.ErrSponsorAuthority
+	}
+
+	err := u.CancelMeeting(meeting)
+	if err != nil {
+		log.Printf("Failed to cancel Meeting, error: %q", err.Error())
+	}
+	return err
+}
+
+// QuitMeeting let LoginedUser quit the given meeting
+func QuitMeeting(title MeetingTitle) error {
+	u := LoginedUser()
+
+	// check if under login status, TODO: check the login status
+	if u == nil {
+		return agendaerror.ErrUserNotLogined
+	}
+
+	meeting := title.RefInAllMeetings()
+	if meeting == nil {
+		return agendaerror.ErrMeetingNotFound
+	}
+
+	// CHECK: what to do in case User is exactly the sponsor ?
+	// for now, refuse that
+	if meeting.SponsoredBy(u.Name) {
+		return agendaerror.ErrSponsorResponsibility
+	}
+
+	if !meeting.ContainsParticipator(u.Name) {
+		return agendaerror.ErrUserNotFound
+	}
+
+	err := u.QuitMeeting(meeting)
+	if err != nil {
+		log.Printf("Failed to quit Meeting, error: %q", err.Error())
+	}
+	return err
+}
+
+// ClearAllMeeting cancels all meeting sponsored by LoginedUser
+func ClearAllMeeting() error {
+	u := LoginedUser()
+
+	// check if under login status, TODO: check the login status
+	if u == nil {
+		return agendaerror.ErrUserNotLogined
+	}
+
+	if err := allMeetings.ForEach(func(m *Meeting) error {
+		if m.SponsoredBy(u.Name) {
+			return CancelMeeting(m.Title)
+		}
+		return nil
+	}); err != nil {
+		log.Printf("Failed to clear all Meetings, error: %q", err.Error())
+		return err
+	}
+	return nil
+}
