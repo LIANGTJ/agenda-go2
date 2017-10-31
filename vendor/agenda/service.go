@@ -74,6 +74,8 @@ func RegisterUser(uInfo UserInfo) error {
 
 // QueryAccountAll queries all accounts
 func QueryAccountAll() UserInfoPublicList {
+	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
+	// Hence, now if so, agenda would crash for `Nil.Name`
 	ret := LoginedUser().QueryAccountAll()
 	return ret
 }
@@ -232,4 +234,30 @@ func RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
 		log.Printf("Failed to remove participator from Meeting, error: %q", err.Error())
 	}
 	return err
+}
+
+// LogOut log out User's own (current working) account
+// TODO:
+func LogOut(name Username) error {
+	u := name.RefInAllUsers()
+
+	// check if under login status, TODO: check the login status
+	if logined := LoginedUser(); logined == nil {
+		return agendaerror.ErrUserNotLogined
+	} else if logined != u {
+		return agendaerror.ErrUserAuthority
+	}
+
+	err := u.LogOut()
+	if err != nil {
+		log.Printf("Failed to log out, error: %q", err.Error())
+	}
+	return err
+}
+
+func QueryMeetingByInterval(start, end time.Time, name Username) entity.MeetingInfoListPrintable {
+	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
+	// Hence, now if so, agenda would crash for `Nil.Name`
+	ret := LoginedUser().QueryMeetingByInterval(start, end)
+	return ret
 }
