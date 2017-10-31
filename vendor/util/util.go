@@ -2,12 +2,23 @@ package util
 
 import (
 	"log"
-	// "util/logger"
+
+	Logger "util/logger"
 )
 
-// var (
-// 	Logger = logger.Logger
-// )
+var (
+	// Logger = logger.Logger
+
+	Print   = Logger.Print
+	Printf  = Logger.Printf
+	Println = Logger.Println
+	Fatal   = Logger.Fatal
+	Fatalf  = Logger.Fatalf
+	Fatalln = Logger.Fatalln
+	Panic   = Logger.Panic
+	Panicf  = Logger.Panicf
+	Panicln = Logger.Panicln
+)
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
