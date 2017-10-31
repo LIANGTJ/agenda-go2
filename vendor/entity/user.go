@@ -153,6 +153,8 @@ func (u *User) QueryAccount() error {
 
 // QueryAccountAll queries all accounts, where User as the actor
 func (u *User) QueryAccountAll() UserInfoPublicList {
+	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
+	// Hence, now if so, agenda would crash for `Nil.Name`
 	ret := GetAllUsersRegistered().PublicInfos()
 	log.Printf("User %v queries all accounts.", u.Name)
 	return ret
@@ -160,12 +162,18 @@ func (u *User) QueryAccountAll() UserInfoPublicList {
 
 // CancelAccount cancels(deletes) the User's own account
 func (u *User) CancelAccount() error {
+	if u == nil {
+		return agendaerror.ErrNilUser
+	}
 	log.Printf("User %v canceled account.", u.Name)
 	return nil
 }
 
 // SponsorMeeting creates a meeting, where User as the actor
 func (u *User) SponsorMeeting(info MeetingInfo) (*Meeting, error) {
+	if u == nil {
+		return nil, agendaerror.ErrNilUser
+	}
 	m := NewMeeting(info)
 	err := GetAllMeetings().Add(m)
 	log.Printf("User %v sponsors meeting %v.", u.Name, info)
@@ -188,7 +196,6 @@ func (u *User) RemoveParticipatorFromMeeting(meeting *Meeting, user *User) error
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-
 	err := meeting.Exclude(user)
 	log.Printf("User %v removes participator %v from Meeting %v.", u.Name, user.Name, meeting.Title)
 	return err
@@ -196,11 +203,18 @@ func (u *User) RemoveParticipatorFromMeeting(meeting *Meeting, user *User) error
 
 // LogOut log out User's own (current working) account
 func (u *User) LogOut() error {
+	if u == nil {
+		return agendaerror.ErrNilUser
+	}
 	return agendaerror.ErrNeedImplement
 }
 
 func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
-	return u.involvedMeetings().Textualize()
+	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
+	// Hence, now if so, agenda would crash for `Nil.Name`
+	ret := u.involvedMeetings().Textualize()
+	log.Printf("User %v queries meetings in time interval %v ~ %v.", u.Name, start, end)
+	return ret
 }
 
 func (u *User) meetingsSponsored() ([]*Meeting, error) {
@@ -209,42 +223,25 @@ func (u *User) meetingsSponsored() ([]*Meeting, error) {
 }
 
 // CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
-func (u *User) CancelMeeting(title MeetingTitle) error {
+func (u *User) CancelMeeting(meeting *Meeting) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	meeting := title.RefInAllMeetings()
-	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
-	}
 
-	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
-	}
-
-	return meeting.Dissolve()
+	err := meeting.Dissolve()
+	log.Printf("User %v cancels Meeting %v.", u.Name, meeting.Title)
+	return err
 }
 
-// QuitMeeting quits from the given meeting, where User as the actor
-// CHECK: what to do in case User is the sponsor ?
-func (u *User) QuitMeeting(title MeetingTitle) error {
+// QuitMeeting let User quit the given meeting, where User as the actor
+func (u *User) QuitMeeting(meeting *Meeting) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	meeting := title.RefInAllMeetings()
-	if meeting == nil {
-		return agendaerror.ErrMeetingNotFound
-	}
 
-	if meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorResponsibility // NOTE: ???
-	}
-
-	if !meeting.ContainsParticipator(u.Name) {
-		return agendaerror.ErrUserNotFound
-	}
-
-	return meeting.Exclude(u)
+	err := meeting.Exclude(u)
+	log.Printf("User %v quits Meeting %v.", u.Name, meeting.Title)
+	return err
 }
 
 // ................................................................
