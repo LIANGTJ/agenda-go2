@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	agendaLogger "util/logger"
 )
 
 var wg sync.WaitGroup
@@ -20,9 +21,16 @@ func Load() {
 }
 
 // Save : Save all data for agenda.
-func Save() {
-	saveRegisteredUserList()
-	saveConfig()
+func Save() error {
+	if err := saveRegisteredUserList(); err != nil {
+		agendaLogger.Println(err.Error())
+		return err
+	}
+	if err := saveConfig(); err != nil {
+		agendaLogger.Println(err.Error())
+		return err
+	}
+	return nil
 }
 
 func loadConfig() {

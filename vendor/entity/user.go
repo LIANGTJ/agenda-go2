@@ -6,10 +6,8 @@ import (
 	"convention/codec"
 	"log"
 	"time"
-	agnedaLog "util/logger"
+	agnedaLogger "util/logger"
 )
-
-var agnedaLogger = agnedaLog.Logger
 
 // var logln = util.Log
 // var logf = util.Logf

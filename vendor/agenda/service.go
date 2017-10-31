@@ -4,6 +4,8 @@ import (
 	"convention/agendaerror"
 	"entity"
 	"log"
+	"model"
+	agendaLogger "util/logger"
 )
 
 type Username = entity.Username
@@ -17,7 +19,8 @@ var allMeetings = entity.GetAllMeetings()
 // NOTE: Now, assume the operations' actor are always the `Current User`
 
 func LoginedUser() *User {
-	return nil
+	name := Username("root")
+	return name.RefInAllUsers()
 }
 
 // RegisterUser ...
@@ -64,4 +67,13 @@ func CancelAccount(name Username) error {
 
 	err := u.CancelAccount()
 	return err
+}
+
+func LoadAll() {
+	model.Load()
+}
+func SaveAll() {
+	if err := model.Save(); err != nil {
+		agendaLogger.Printf(err.Error())
+	}
 }
