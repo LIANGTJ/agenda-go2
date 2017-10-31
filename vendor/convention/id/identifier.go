@@ -1,4 +1,4 @@
-package util
+package id
 
 // Identifier as a unique identifier, like ID
 type Identifier interface {

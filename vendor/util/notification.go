@@ -1,12 +1,8 @@
-package entity
+package util
 
 import (
 	"time"
-	"util"
 )
-
-var logln = util.Log
-var logf = util.Logf
 
 type Notification struct {
 	Type      string
@@ -16,5 +12,5 @@ type Notification struct {
 }
 
 func Notify(text string) {
-	logf(text)
+	Logf(text)
 }

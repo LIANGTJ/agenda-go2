@@ -2,6 +2,7 @@ package model
 
 import (
 	"bufio"
+	"config"
 	"encoding/json"
 	"entity"
 	"log"
@@ -25,26 +26,26 @@ func Save() {
 }
 
 func loadConfig() {
-	fcfg, err := os.Open(AgendaConfigPath())
+	fcfg, err := os.Open(config.AgendaConfigPath())
 	if err != nil {
-		log.Fatalf("Load config fail, for config path: %v\n", AgendaConfigPath())
+		log.Fatalf("Load config fail, for config path: %v\n", config.AgendaConfigPath())
 	}
 	decoder := json.NewDecoder(fcfg)
 
-	entity.LoadConfig(decoder)
+	config.LoadConfig(decoder)
 }
 func saveConfig() error {
-	fcfg, err := os.Create(AgendaConfigPath())
+	fcfg, err := os.Create(config.AgendaConfigPath())
 	if err != nil {
-		log.Fatalf("Save config fail, for config path: %v\n", AgendaConfigPath())
+		log.Fatalf("Save config fail, for config path: %v\n", config.AgendaConfigPath())
 	}
 	encoder := json.NewEncoder(fcfg)
 
-	return entity.SaveConfig(encoder)
+	return config.SaveConfig(encoder)
 }
 
 func loadRegisteredUserList() {
-	fin, err := os.Open(UserDataRegisteredPath())
+	fin, err := os.Open(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,7 +54,7 @@ func loadRegisteredUserList() {
 	entity.LoadUsersAllRegistered(decoder)
 }
 func saveRegisteredUserList() error {
-	fout, err := os.Create(UserDataRegisteredPath())
+	fout, err := os.Create(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)
 	}
