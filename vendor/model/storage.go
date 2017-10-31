@@ -15,14 +15,8 @@ var wg sync.WaitGroup
 var fin = os.Stdin
 
 var (
-	filepaths = []string{
-		config.UserDataRegisteredPath(),
-		// config.UserDataPath(),
-		// config.UserTestPath(),
-		config.MeetingDataPath(),
-		// config.MeetingTestPath(),
-		config.AgendaConfigPath(),
-	}
+	// files     = config.Config["flies"].(map[string](interface{}))
+	filepaths = config.NeededFilepaths()
 )
 
 func ensurePathsNeededExist() {

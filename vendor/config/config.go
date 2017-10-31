@@ -6,7 +6,9 @@ import (
 	"os"
 )
 
-var DebugMode = true
+var debugMode = true
+
+func DebugMode() bool { return debugMode }
 
 // type Config = map[string](interface{})
 
@@ -31,7 +33,7 @@ func SaveConfig(encoder codec.Encoder) error {
 // WorkingDir for agenda.
 func WorkingDir() string {
 	location, existed := os.LookupEnv("HOME")
-	if !existed || DebugMode {
+	if !existed || DebugMode() {
 		location = "."
 	}
 	// NOTE: here to ensure workingdir existed ?
@@ -39,11 +41,36 @@ func WorkingDir() string {
 	return ret
 }
 
-func UserDataRegisteredPath() string { return WorkingDir() + "user-registered.json" }
-func UserDataPath() string           { return WorkingDir() + "user-data.json" }
-func UserTestPath() string           { return WorkingDir() + "user-test.json" }
+func init() {
+	files := make(map[string](interface{}))
+	files["all-user-registered-data"] = "user-registered.json"
+	files["all-meeting-data"] = "meeting-data.json"
+	files["user-logined-data"] = "curUser.txt"
+	// "config.json"
 
-func MeetingDataPath() string { return WorkingDir() + "meeting-data.json" }
-func MeetingTestPath() string { return WorkingDir() + "meeting-test.json" }
+	Config["files"] = files
+
+}
+
+var neededFilepaths = []string{
+	UserDataRegisteredPath(),
+	MeetingDataPath(),
+	AgendaConfigPath(),
+}
+
+func NeededFilepaths() []string {
+	return neededFilepaths
+}
+
+// func UserDataPath() string           { return WorkingDir() + "user-data.json" }
+// func UserTestPath() string           { return WorkingDir() + "user-test.json" }
+// func MeetingTestPath() string { return WorkingDir() + "meeting-test.json" }
+
+func UserDataRegisteredPath() string { return WorkingDir() + "user-registered.json" }
+func MeetingDataPath() string        { return WorkingDir() + "meeting-data.json" }
 
 func AgendaConfigPath() string { return WorkingDir() + "config.json" }
+
+func BackupDir() string {
+	return WorkingDir() + "backup/"
+}
