@@ -40,7 +40,7 @@ func GetAllUsersRegistered() *UserList {
 // UserInfo represents the informations of a User
 type UserInfo struct {
 	Name  Username
-	auth  auth.Auth
+	Auth  auth.Auth
 	Mail  string
 	Phone string
 }
@@ -287,7 +287,7 @@ func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrint
 	return u.involvedMeetings().Textualize()
 }
 
-func (u *User) meetingsSpoonsored() ([]*Meeting, error) {
+func (u *User) meetingsSponsored() ([]*Meeting, error) {
 	return nil, ErrNeedImplement
 }
 
