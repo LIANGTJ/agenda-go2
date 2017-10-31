@@ -37,12 +37,20 @@ to quickly create a Cobra application.`,
 		password, _ := cmd.Flags().GetString("password")
 		email, _ := cmd.Flags().GetString("email")
 		phone, _ := cmd.Flags().GetString("phone")
+		if(!username) {
+			fmt.Errorf("", ...)
+		}
 		fmt.Println("register called by " + username)
 		fmt.Println("register with info password: " + password)
 		fmt.Println("register with info email: " + email)
 		fmt.Println("register with info phone: " + phone)
+
+		userInfo := new UserInfo{Username(username), auth.Auth(password),email, phone}
+		RegisterUser(user)
+
 	},
 }
+
 
 func init() {
 	RootCmd.AddCommand(registerCmd)
