@@ -6,7 +6,7 @@ import (
 	"convention/codec"
 	"log"
 	"time"
-	agnedaLogger "util/logger"
+	log "util/logger"
 )
 
 // var logln = util.Log
@@ -145,12 +145,6 @@ func (u *User) FreeWhen(start, end time.Time) bool {
 	return true
 }
 
-// CancelAccount cancels(deletes) the User's own account
-func (u *User) CancelAccount() error {
-	agnedaLogger.Printf("User %v cancels account.", u.Name)
-	return nil
-}
-
 // QueryAccount queries an account, where User as the actor
 func (u *User) QueryAccount() error {
 	return agendaerror.ErrNeedImplement
@@ -158,81 +152,34 @@ func (u *User) QueryAccount() error {
 
 // QueryAccountAll queries all accounts, where User as the actor
 func (u *User) QueryAccountAll() UserInfoPublicList {
-	return GetAllUsersRegistered().PublicInfos()
+	ret := GetAllUsersRegistered().PublicInfos()
+	log.Printf("User %v queries all accounts.", u.Name)
+	return ret
 }
 
-// CreateMeeting creates a meeting, where User as the actor
-func (u *User) CreateMeeting(info MeetingInfo) (*Meeting, error) {
-	// NOTE: dev-assert
-	if info.Sponsor != nil && info.Sponsor.Name != u.Name {
-		log.Fatalf("User %v is creating a meeting with Sponsor %v\n", u.Name, info.Sponsor.Name)
-	}
+// CancelAccount cancels(deletes) the User's own account
+func (u *User) CancelAccount() error {
+	log.Printf("User %v canceled account.", u.Name)
+	return nil
+}
 
-	// NOTE: repeat in MeetingList.Add ... DEL ?
-	if info.Title.RefInAllMeetings() != nil {
-		return nil, agendaerror.ErrExistedMeetingTitle
-	}
-
-	if !u.Registered() {
-		return nil, agendaerror.ErrUserNotRegistered
-	}
-
-	if err := info.Participators.ForEach(func(u *User) error {
-		if !u.Registered() {
-			return agendaerror.ErrUserNotRegistered
-		}
-		return nil
-	}); err != nil {
-		log.Printf(err.Error())
-		return nil, err
-	}
-
-	if !info.EndTime.After(info.StartTime) {
-		return nil, agendaerror.ErrInvalidTimeInterval
-	}
-
-	if err := info.Participators.ForEach(func(u *User) error {
-		if !u.FreeWhen(info.StartTime, info.EndTime) {
-			return agendaerror.ErrConflictedTimeInterval
-		}
-		return nil
-	}); err != nil {
-		log.Printf(err.Error())
-		return nil, err
-	}
-
+// SponsorMeeting creates a meeting, where User as the actor
+func (u *User) SponsorMeeting(info MeetingInfo) (*Meeting, error) {
 	m := NewMeeting(info)
 	err := GetAllMeetings().Add(m)
+	log.Printf("User %v sponsors meeting %v.", u.Name, info)
 	return m, err
 }
 
 // AddParticipatorToMeeting just as its name
-func (u *User) AddParticipatorToMeeting(title MeetingTitle, name Username) error {
+func (u *User) AddParticipatorToMeeting(meeting *Meeting, user *User) error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
 
-	meeting, user := title.RefInAllMeetings(), name.RefInAllUsers()
-	if meeting == nil {
-		return agendaerror.ErrNilMeeting
-	}
-	if user == nil {
-		return agendaerror.ErrNilUser
-	}
-
-	if !meeting.SponsoredBy(u.Name) {
-		return agendaerror.ErrSponsorAuthority
-	}
-
-	if meeting.ContainsParticipator(name) {
-		return agendaerror.ErrExistedUser
-	}
-
-	if !user.FreeWhen(meeting.StartTime, meeting.EndTime) {
-		return agendaerror.ErrConflictedTimeInterval
-	}
-
-	return meeting.Involve(user)
+	err := meeting.Involve(user)
+	log.Printf("User %v adds participator %v into Meeting %v.", u.Name, user.Name, meeting.Title)
+	return err
 }
 
 // RemoveParticipatorFromMeeting just as its name
