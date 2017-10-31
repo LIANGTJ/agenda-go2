@@ -72,7 +72,7 @@ func init() {
 
 	registerCmd.Flags().StringP("username", "u", "Anonymous", "register info for username")
 	registerCmd.Flags().StringP("password", "p", "", "register info for password")
-	registerCmd.Flags().StringP("email", "m", "", "register info for email")
+	registerCmd.Flags().StringP("email", "e", "", "register info for email")
 	registerCmd.Flags().StringP("phone", "t", "", "register info for phone")
 
 }
