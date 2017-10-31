@@ -295,33 +295,33 @@ func (ml *MeetingList) Contains(title MeetingTitle) bool {
 
 func (ml *MeetingList) Add(meeting *Meeting) error {
 	if meeting == nil {
-		return agendaerror.NilMeeting
+		return agendaerror.ErrNilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
-		return agendaerror.ExistedMeeting
+		return agendaerror.ErrExistedMeeting
 	}
 	ml.Meetings[title] = meeting
 	return nil
 }
 func (ml *MeetingList) Remove(meeting *Meeting) error {
 	if meeting == nil {
-		return agendaerror.NilMeeting
+		return agendaerror.ErrNilMeeting
 	}
 	title := meeting.Title
 	if ml.Contains(title) {
 		delete(ml.Meetings, title) // NOTE: never error, according to 'go-maps-in-action'
 		return nil
 	}
-	return agendaerror.MeetingNotFound
+	return agendaerror.ErrMeetingNotFound
 }
 func (ml *MeetingList) PickOut(title MeetingTitle) (*Meeting, error) {
 	if title.Empty() {
-		return nil, agendaerror.EmptyMeetingTitle
+		return nil, agendaerror.ErrEmptyMeetingTitle
 	}
 	m := ml.Ref(title)
 	if m == nil {
-		return nil, agendaerror.MeetingNotFound
+		return nil, agendaerror.ErrMeetingNotFound
 	}
 	defer ml.Remove(m)
 	return m, nil

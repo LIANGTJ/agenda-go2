@@ -17,7 +17,7 @@ var allMeetings = entity.GetAllMeetings()
 // NOTE: Now, assume the operations' actor are always the `Current User`
 
 func LoginedUser() *User {
-
+	return nil
 }
 
 // RegisterUser ...
@@ -33,9 +33,9 @@ func CancelAccount(name Username) error {
 
 	// check if under login status, TODO: check the login status
 	if logined := LoginedUser(); logined == nil {
-		return agendaerror.UserNotLogined
+		return agendaerror.ErrUserNotLogined
 	} else if logined != u {
-		return agendaerror.UserAuthority
+		return agendaerror.ErrUserAuthority
 	}
 
 	// del all meeting that this user is sponsor

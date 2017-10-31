@@ -6,34 +6,34 @@ var (
 	ErrNeedImplement = errors.New("this function need to be implemented")
 
 	// User
-	NilUser           = errors.New("a nil user/*user is to be used")
-	ExistedUser       = errors.New("the user has been existed")
-	UserNotFound      = errors.New("cannot find the user")
-	UserNotRegistered = errors.New("cannot find the user for registered one")
-	UserNotLogined    = errors.New("no user logined")
+	ErrNilUser           = errors.New("a nil user/*user is to be used")
+	ErrExistedUser       = errors.New("the user has been existed")
+	ErrUserNotFound      = errors.New("cannot find the user")
+	ErrUserNotRegistered = errors.New("cannot find the user for registered one")
+	ErrUserNotLogined    = errors.New("no user logined")
 
-	EmptyUsername = errors.New("given username cannot be empty")
+	ErrEmptyUsername = errors.New("given username cannot be empty")
 
-	UserAuthority = errors.New("only the User self can modify his/her account")
+	ErrUserAuthority = errors.New("only the User self can modify his/her account")
 
-	SponsorAuthority      = errors.New("only the sponsor can modify the meeting")
-	SponsorResponsibility = errors.New("the sponsor can only cancel but not quit the meeting")
+	ErrSponsorAuthority      = errors.New("only the sponsor can modify the meeting")
+	ErrSponsorResponsibility = errors.New("the sponsor can only cancel but not quit the meeting")
 
 	// Meeting
-	NilMeeting          = errors.New("a nil meeting/*meeting is to be used")
-	ExistedMeeting      = errors.New("the meeting has been existed")
-	ExistedMeetingTitle = errors.New("the meeting title has been existed")
-	MeetingNotFound     = errors.New("cannot find the meeting")
+	ErrNilMeeting          = errors.New("a nil meeting/*meeting is to be used")
+	ErrExistedMeeting      = errors.New("the meeting has been existed")
+	ErrExistedMeetingTitle = errors.New("the meeting title has been existed")
+	ErrMeetingNotFound     = errors.New("cannot find the meeting")
 
-	EmptyMeetingTitle = errors.New("given meeting title cannot be empty")
+	ErrEmptyMeetingTitle = errors.New("given meeting title cannot be empty")
 
 	// Time
 	// InvalidTime         = errors.New("startTime/EndTime is not valid")
-	InvalidTimeInterval    = errors.New("endTime must be after StartTime")
-	ConflictedTimeInterval = errors.New("given time interval conflicts with existed interval")
+	ErrInvalidTimeInterval    = errors.New("endTime must be after StartTime")
+	ErrConflictedTimeInterval = errors.New("given time interval conflicts with existed interval")
 
 	// Information
-	GivenConflictedInfo = errors.New("given a not reasonable information")
+	ErrGivenConflictedInfo = errors.New("given a not reasonable information")
 )
 
 type AgendaError struct {
