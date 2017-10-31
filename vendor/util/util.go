@@ -2,12 +2,12 @@ package util
 
 import (
 	"log"
-	"util/logger"
+	// "util/logger"
 )
 
-var (
-	Logger = logger.Logger
-)
+// var (
+// 	Logger = logger.Logger
+// )
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)

@@ -15,65 +15,80 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
-	"gihub.com/olekukonko/tablewriter"
 	"agenda"
+	"errors"
+	"fmt"
+	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/cobra"
+	"os"
+	"time"
 )
 
-// searchCmd represents the register command
+// searchCmd represents the search command
 var searchCmd = &cobra.Command{
-	Use:   "register",
-	Short: "register for further use",
-	Long: `register for further use and u need to input username, password.
+	Use:   "search",
+	Short: "search for further use",
+	Long: `search for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
 	Run: func(cmd *cobra.Command, args []string) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Errorf("Error[register]： %v\n", err)
+				fmt.Errorf("Error[search]： %v\n", err)
 			}
 		}()
 
-		fmt.Println("register called")
+		fmt.Println("search called")
 
 		userFlagBool, _ := cmd.Flags().GetBool("user")
-		meetingFlagBool, _ := cmd.Flags().GetString("meeting")
-		
-		if(userFlagBool && meetingFlagBool) {
+		meetingFlagBool, _ := cmd.Flags().GetBool("meeting")
+		startFlag, _ := cmd.Flags().GetString("startTime")
+		endFlag, _ := cmd.Flags().GetString("endTime")
+
+		startTime, _ := time.Parse("2006-01-02 15:04:05", startFlag)
+		endTime, _ := time.Parse("2006-01-02 15:04:05", endFlag)
+
+		if userFlagBool && meetingFlagBool {
+
 			panic(errors.New("The flag meeting(m) and user(u) can't appear at the same time"))
-		} else if(userFlagBool) {
-			// usernameItem := "username"
-			// emailItem := "email"
-			// phoneItem := "phone"
+
+		} else if userFlagBool {
+
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Name", "Email", "Phone"})
-
-			userInfoList := agenda.QueryAccountAll()
-			for _, userInfo range userInfoList {
-				data := []string{userInfo.username, userInfo.email, userInfo.phone}
-				table.append(data)
+			userList := agenda.QueryAccountAll()
+			for _, user := range userList {
+				data := []string{string(user.Name), user.Mail, user.Phone}
+				table.Append(data)
 			}
 			table.Render()
-		} else if{
+
+		} else {
+
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Title", "Sponsor", "startTime", "EndTime", "Participators"})
+			currentUsername := agenda.LoginedUser().Name
+			meetingList := agenda.QueryMeetingByInterval(startTime, endTime, currentUsername)
+			for _, meeting := range meetingList {
+				participators := ""
+				for _, participator := range meeting.Participators {
+					participators = participators + " " + string(participator)
+				}
+				table.Append([]string{string(meeting.Title), string(meeting.Sponsor),
+					meeting.StartTime, meeting.EndTime,
+					participators})
 
-			 agenda.QueryMeetingAll
-			for _, data := range data {
-				table.Append()
+				table.Render()
 			}
 		}
 
-		
+		// info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
 
-		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
-
-		if err := agenda.RegisterUser(info); err != nil {
-			panic(err)
-		} else {
-			fmt.Print("register sucessfully!\n")
-			agenda.SaveAll()
-		}
+		// if err := agenda.RegisterUser(info); err != nil {
+		// 	panic(err)
+		// } else {
+		// 	fmt.Print("search sucessfully!\n")
+		// 	agenda.SaveAll()
+		// }
 	},
 }
 
