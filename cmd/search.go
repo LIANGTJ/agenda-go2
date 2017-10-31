@@ -31,21 +31,21 @@ var searchCmd = &cobra.Command{
 	Long: `search for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
 	Run: func(cmd *cobra.Command, args []string) {
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Errorf("Error[search]： %v\n", err)
-			}
-		}()
+		// defer func() {
+		// 	if err := recover(); err != nil {
+		// 		fmt.Errorf("Error[search]： %v\n", err)
+		// 	}
+		// }()
 
 		fmt.Println("search called")
 
 		userFlagBool, _ := cmd.Flags().GetBool("user")
 		meetingFlagBool, _ := cmd.Flags().GetBool("meeting")
-		startFlag, _ := cmd.Flags().GetString("startTime")
-		endFlag, _ := cmd.Flags().GetString("endTime")
+		startTimeFlag, _ := cmd.Flags().GetString("startTime")
+		endTimeFlag, _ := cmd.Flags().GetString("endTime")
 
-		startTime, _ := time.Parse("2006-01-02 15:04:05", startFlag)
-		endTime, _ := time.Parse("2006-01-02 15:04:05", endFlag)
+		startTime, _ := time.Parse("2006-01-02 15:04:05", startTimeFlag)
+		endTime, _ := time.Parse("2006-01-02 15:04:05", endTimeFlag)
 
 		if userFlagBool && meetingFlagBool {
 

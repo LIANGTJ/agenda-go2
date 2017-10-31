@@ -26,13 +26,30 @@ func Save() error {
 		agendaLogger.Println(err.Error())
 		return err
 	}
+	if err := saveAllMeeting(); err != nil {
+		agendaLogger.Println(err.Error())
+		return err
+	}
 	if err := saveConfig(); err != nil {
 		agendaLogger.Println(err.Error())
 		return err
 	}
 	return nil
 }
+func saveAllMeeting() error {
+	log.Println("saveMeeting Error------------\n")
+	fout, err := os.Create(config.MeetingDataPath())
+	if err != nil {
+		log.Fatal(err)
+	}
+	encoder := json.NewEncoder(fout)
 
+	if err := entity.GetAllMeetings().Save(encoder); err != nil {
+		log.Printf(err.Error()) // TODO: hadnle ?
+		return err
+	}
+	return nil
+}
 func loadConfig() {
 	fcfg, err := os.Open(config.AgendaConfigPath())
 	if err != nil {
