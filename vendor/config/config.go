@@ -4,6 +4,7 @@ import (
 	"convention/codec"
 	"log"
 	"os"
+	"time"
 )
 
 var debugMode = true
@@ -66,6 +67,7 @@ func MeetingDataPath() string        { return WorkingDir() + "meeting-data.json"
 
 func AgendaConfigPath() string { return WorkingDir() + "config.json" }
 
+func LogPath() string             { return WorkingDir() + "agenda_" + time.Now().Format("20060102_0304") + ".log" }
 func UserLoginStatusPath() string { return WorkingDir() + "curUser.txt" }
 
 func BackupDir() string {
