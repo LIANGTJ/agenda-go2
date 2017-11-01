@@ -15,8 +15,7 @@ func DebugMode() bool { return debugMode }
 // Config holds all configure of Agenda system.
 var Config = make(map[string](interface{}))
 
-// TODO: let Config, AllUsers, etc global singleton
-func LoadConfig(decoder codec.Decoder) {
+func Load(decoder codec.Decoder) {
 	cfg := &(Config)
 	// CHECK: Need check if have already exactly loaded ALL config (i.e. eof) ?
 	if err := decoder.Decode(cfg); err != nil {
@@ -24,7 +23,7 @@ func LoadConfig(decoder codec.Decoder) {
 	}
 }
 
-func SaveConfig(encoder codec.Encoder) error {
+func Save(encoder codec.Encoder) error {
 	return encoder.Encode(Config)
 }
 
@@ -36,7 +35,6 @@ func WorkingDir() string {
 	if !existed || DebugMode() {
 		location = "."
 	}
-	// NOTE: here to ensure workingdir existed ?
 	ret := location + "/.agenda.d/"
 	return ret
 }
@@ -62,10 +60,6 @@ var neededFilepaths = []string{
 func NeededFilepaths() []string {
 	return neededFilepaths
 }
-
-// func UserDataPath() string           { return WorkingDir() + "user-data.json" }
-// func UserTestPath() string           { return WorkingDir() + "user-test.json" }
-// func MeetingTestPath() string { return WorkingDir() + "meeting-test.json" }
 
 func UserDataRegisteredPath() string { return WorkingDir() + "user-registered.json" }
 func MeetingDataPath() string        { return WorkingDir() + "meeting-data.json" }

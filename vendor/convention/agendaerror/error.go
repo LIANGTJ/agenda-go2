@@ -12,7 +12,8 @@ var (
 	ErrUserNotRegistered = errors.New("cannot find the user for registered one")
 	ErrUserNotLogined    = errors.New("no user logined")
 
-	ErrEmptyUsername = errors.New("given username cannot be empty")
+	ErrEmptyUsername   = errors.New("given username cannot be empty")
+	ErrInvalidUsername = errors.New("given username is invalid")
 
 	ErrFailedAuth           = errors.New("auth verify failed.")
 	ErrLoginedUserAuthority = errors.New("only the User has logged in can modify login status.")
@@ -28,7 +29,8 @@ var (
 	ErrExistedMeetingTitle = errors.New("the meeting title has been existed")
 	ErrMeetingNotFound     = errors.New("cannot find the meeting")
 
-	ErrEmptyMeetingTitle = errors.New("given meeting title cannot be empty")
+	ErrEmptyMeetingTitle   = errors.New("given meeting title cannot be empty")
+	ErrInvalidMeetingTitle = errors.New("given meeting title is invalid")
 
 	// Time
 	// InvalidTime         = errors.New("startTime/EndTime is not valid")

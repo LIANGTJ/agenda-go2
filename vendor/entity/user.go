@@ -4,7 +4,6 @@ import (
 	"auth"
 	"convention/agendaerror"
 	"convention/codec"
-	"time"
 	log "util/logger"
 )
 
@@ -22,28 +21,12 @@ func (name Username) Empty() bool {
 
 // Valid checks if Username valid
 func (name Username) Valid() bool {
-	// FIXME: not only !empty
-	return !name.Empty()
+	return !name.Empty() // NOTE: may not only !empty
 }
 
 func (name Username) String() string {
 	return string(name)
 }
-
-// TODO: Not sure where to place ...
-var allUsersRegistered = *(NewUserList())
-
-// RefInAllUsers returns the ref of a Registered User depending on the Username
-func (name Username) RefInAllUsers() *User {
-	return allUsersRegistered.Ref(name)
-}
-
-// GetAllUsersRegistered returns the reference of the UserList of all Registered Users
-func GetAllUsersRegistered() *UserList {
-	return &allUsersRegistered
-}
-
-type UserIdentifierList []Username
 
 type UserInfoPublic struct {
 	Name Username
@@ -71,37 +54,19 @@ type User struct {
 
 // NewUser creates a User object with given UserInfo
 func NewUser(info UserInfo) *User {
-	if info.Name.Empty() {
-		// FIXME: more elegant ?
-		// TODO: provide a ready-user that allowe to be empty to be loaded info into ?
-		log.Printf("An empty UserInfo is passed to new a User. Just return `nil`.")
-		return nil
-	}
 	u := new(User)
 	u.UserInfo = info
 	return u
 }
 
-// LoadUsersAllRegistered concretely loads all Registered Users
-func LoadUsersAllRegistered(decoder codec.Decoder) {
-	users := &(allUsersRegistered)
-	LoadUserList(decoder, users)
-}
-
-// SaveUsersAllRegistered concretely saves all Registered Users
-func SaveUsersAllRegistered(encoder codec.Encoder) error {
-	users := &(allUsersRegistered)
-	return users.Save(encoder)
-}
-
 // LoadUser load a User into given container(u) from given decoder
 func LoadUser(decoder codec.Decoder, u *User) {
-	uInfo := new(UserInfo)
-	err := decoder.Decode(uInfo)
+	uInfoSerial := new(UserInfoSerializable)
+	err := decoder.Decode(uInfoSerial)
 	if err != nil {
 		log.Fatal(err)
 	}
-	u.UserInfo = *uInfo
+	u.UserInfo = *uInfoSerial // omit the deserial
 }
 
 // LoadedUser returns loaded User from given decoder
@@ -113,148 +78,10 @@ func LoadedUser(decoder codec.Decoder) *User {
 
 // Save saves User with given encoder
 func (u *User) Save(encoder codec.Encoder) error {
-	return encoder.Encode(u.UserInfo)
+	return encoder.Encode(u.UserInfo) // omit the serial
 }
 
-func (u *User) Registered() bool {
-	if u == nil {
-		return false
-	}
-	return GetAllUsersRegistered().Contains(u.Name)
-}
-
-func (u *User) involvedMeetings() *MeetingList {
-	return GetAllMeetings().Filter(func(m Meeting) bool {
-		return m.SponsoredBy(u.Name) || m.ContainsParticipator(u.Name)
-	})
-}
-
-func (u *User) FreeWhen(start, end time.Time) bool {
-	if u == nil {
-		return false
-	}
-
-	// NOTE: need improve:
-	if err := u.involvedMeetings().ForEach(func(m *Meeting) error {
-		s1, e1 := m.StartTime, m.EndTime
-		s2, e2 := start, end
-		if s1.Before(e2) && e1.After(s2) {
-			return agendaerror.ErrConflictedTimeInterval
-		}
-		return nil
-	}); err != nil {
-		log.Printf(err.Error())
-		return false
-	}
-
-	return true
-}
-
-// QueryAccount queries an account, where User as the actor
-func (u *User) QueryAccount() error {
-	return agendaerror.ErrNeedImplement
-}
-
-// QueryAccountAll queries all accounts, where User as the actor
-func (u *User) QueryAccountAll() UserInfoPublicList {
-	// NOTE: whatever, temporarily ignore the problem that the actor of query is Nil
-	username := Username("Anonymous")
-	if u != nil {
-		username = u.Name
-	}
-	ret := GetAllUsersRegistered().PublicInfos()
-	log.Printf("User %v queries all accounts.", username)
-	return ret
-}
-
-// CancelAccount cancels(deletes) the User's own account
-func (u *User) CancelAccount() error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-	log.Printf("User %v canceled account.", u.Name)
-	return nil
-}
-
-// SponsorMeeting creates a meeting, where User as the actor
-func (u *User) SponsorMeeting(info MeetingInfo) (*Meeting, error) {
-	if u == nil {
-		return nil, agendaerror.ErrNilUser
-	}
-	m := NewMeeting(info)
-	err := GetAllMeetings().Add(m)
-	log.Printf("User %v sponsors meeting %v.", u.Name, info)
-	return m, err
-}
-
-// AddParticipatorToMeeting just as its name
-func (u *User) AddParticipatorToMeeting(meeting *Meeting, user *User) error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-
-	err := meeting.Involve(user)
-	log.Printf("User %v adds participator %v into Meeting %v.", u.Name, user.Name, meeting.Title)
-	return err
-}
-
-// RemoveParticipatorFromMeeting just as its name
-func (u *User) RemoveParticipatorFromMeeting(meeting *Meeting, user *User) error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-	err := meeting.Exclude(user)
-	log.Printf("User %v removes participator %v from Meeting %v.", u.Name, user.Name, meeting.Title)
-	return err
-}
-
-// LogOut log out User's own (current working) account
-func (u *User) LogOut() error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-
-	log.Printf("User %v logs out.", u.Name)
-	return nil
-}
-
-func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrintable {
-	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
-	username := Username("Anonymous")
-	if u != nil {
-		username = u.Name
-	}
-	ret := u.involvedMeetings().Textualize()
-	log.Printf("User %v queries meetings in time interval %v ~ %v.", username, start, end)
-	return ret
-}
-
-func (u *User) meetingsSponsored() ([]*Meeting, error) {
-
-	return nil, agendaerror.ErrNeedImplement
-}
-
-// CancelMeeting cancels(deletes) the given meeting which sponsored by User self, where User as the actor
-func (u *User) CancelMeeting(meeting *Meeting) error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-
-	err := meeting.Dissolve()
-	log.Printf("User %v cancels Meeting %v.", u.Name, meeting.Title)
-	return err
-}
-
-// QuitMeeting let User quit the given meeting, where User as the actor
-func (u *User) QuitMeeting(meeting *Meeting) error {
-	if u == nil {
-		return agendaerror.ErrNilUser
-	}
-
-	err := meeting.Exclude(u)
-	log.Printf("User %v quits Meeting %v.", u.Name, meeting.Title)
-	return err
-}
+// omit the serializer/deserializer
 
 // ................................................................
 
@@ -267,52 +94,43 @@ type UserList struct {
 // NOTE: these type may be modified/removed in future
 type UserListRaw = []*User
 
-type UserInfoPublicList []UserInfoPublic
+// UserInfoSerializableList represents a list of serializable UserInfo
+type UserInfoSerializableList []UserInfoSerializable
 
-// UserInfoListSerializable represents a list of serializable UserInfo
-type UserInfoListSerializable []UserInfoSerializable
+// Serialize just serializes from UserList to UserInfoSerializableList
+func (ul *UserList) Serialize() UserInfoSerializableList {
+	ret := make(UserInfoSerializableList, 0, ul.Size())
 
-// Serialize just serializes from UserList to UserInfoListSerializable
-func (ul *UserList) Serialize() UserInfoListSerializable {
-	users := ul.Slice()
-	ret := make(UserInfoListSerializable, 0, ul.Size())
-
-	// logln("ul.Size(): ", ul.Size())
-	// logf("Serialize: %+v \n", users)
-	for _, u := range users {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+	ul.ForEach(func(u *User) error {
 		if u == nil {
-			log.Printf("A nil User is to be used. Just SKIP OVER it.")
-			continue
+			log.Warning("A nil User is to be used. Just SKIP OVER it.")
+			return nil
 		}
+		ret = append(ret, u.UserInfo) // omit the serial
+		return nil
+	})
 
-		ret = append(ret, u.UserInfo)
-	}
 	return ret
 }
 
 // Size just returns the size
-func (ulSerial UserInfoListSerializable) Size() int {
+func (ulSerial UserInfoSerializableList) Size() int {
 	return len(ulSerial)
 }
 
 // Deserialize deserializes from serialized UserInfoList to UserList
-func (ulSerial UserInfoListSerializable) Deserialize() *UserList {
+// CHECK: Now no used (, to loading a UserList)
+func (ulSerial UserInfoSerializableList) Deserialize() *UserList {
 	ret := NewUserList()
 
 	for _, uInfo := range ulSerial {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		// FIXME: Not use `== nil` because `uInfo` is a  struct
 		if uInfo.Name.Empty() {
-			log.Printf("A No-Name UserInfo is to be used. Just SKIP OVER it.")
+			log.Warning("A No-Name UserInfo is to be used. Just SKIP OVER it.")
 			continue
 		}
-
-		u := NewUser(uInfo)
+		u := NewUser(uInfo) // omit the deserial
 		if err := ret.Add(u); err != nil {
-			log.Printf(err.Error()) // CHECK:
+			log.Error(err)
 		}
 	}
 	return ret
@@ -325,39 +143,38 @@ func NewUserList() *UserList {
 	return ul
 }
 
-// NOTE: these API (about loading) may be modified in future
 // CHECK: Need in-place load method ?
 
 // LoadUserList loads a UserList into given container(ul) from given decoder
 func LoadUserList(decoder codec.Decoder, ul *UserList) {
 	// CHECK: Need clear ul ?
-	// for decoder.More() {
-	// 	user := LoadedUser(decoder)
-	// 	if err := ul.Add(user); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
-	ulSerial := new(UserInfoListSerializable)
+
+	ulSerial := new(UserInfoSerializableList)
 	if err := decoder.Decode(ulSerial); err != nil {
 		log.Fatal(err)
 	}
 	for _, uInfoSerial := range *ulSerial {
 		u := NewUser(uInfoSerial)
 		if err := ul.Add(u); err != nil {
-			log.Printf(err.Error())
+			log.Error(err)
 		}
 	}
 }
 
-// InitFrom loads UserList in-place from given UserIdentifierList; Just like `init`
-func (ul *UserList) InitFrom(li UserIdentifierList) {
+// InitFrom loads UserList in-place from given []Username; Just like `init`
+// CHECK: Not sure whether need/should return error
+func (ul *UserList) InitFrom(li []Username) error {
 	// clear ...
 	ul.Users = NewUserList().Users
 
 	for _, id := range li {
-		u := id.RefInAllUsers() // CHECK: ditto
-		ul.Add(u)
+		u := id.RefInAllUsers()
+		if err := ul.Add(u); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
+	return nil
 }
 
 // LoadFrom loads UserList in-place from given decoder; Just like `init`
@@ -372,34 +189,31 @@ func LoadedUserList(decoder codec.Decoder) *UserList {
 	return ul
 }
 
-func (ul *UserList) identifiers() []Username {
+func (ul *UserList) Identifiers() []Username {
 	ret := make([]Username, 0, ul.Size())
 	for _, u := range ul.PublicInfos() {
 		ret = append(ret, u.Name)
 	}
 	return ret
 }
-func (ul *UserList) PublicInfos() UserInfoPublicList {
-	users := ul.Slice()
-	ret := make(UserInfoPublicList, 0, ul.Size())
+func (ul *UserList) PublicInfos() []UserInfoPublic {
+	ret := make([]UserInfoPublic, 0, ul.Size())
 
-	for _, u := range users {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
+	ul.ForEach(func(u *User) error {
 		if u == nil {
-			log.Printf("A nil User is to be used. Just SKIP OVER it.")
-			continue
+			log.Warningf("A nil User is to be used. Just SKIP OVER it.")
+			return nil
 		}
-
 		ret = append(ret, u.UserInfoPublic)
-	}
+		return nil
+	})
+
 	return ret
 }
 
 // Save use given encoder to Save UserList
 func (ul *UserList) Save(encoder codec.Encoder) error {
 	sl := ul.Serialize()
-	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
 }
 

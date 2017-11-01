@@ -24,6 +24,13 @@ import (
 // 	Panic   = Logger.Panic
 // 	Panicf  = Logger.Panicf
 // 	Panicln = Logger.Panicln
+//  // TODO:
+//  Warning   = Logger.Print
+//  Warningf  = Logger.Printf
+//  Warningln = Logger.Println
+//  Error     = Logger.Print
+//  Errorf    = Logger.Printf
+//  Errorln   = Logger.Println
 // )
 
 var (
@@ -36,4 +43,12 @@ var (
 	Panic   = log.Panic
 	Panicf  = log.Panicf
 	Panicln = log.Panicln
+
+	// TODO:
+	Warning   = log.Print
+	Warningf  = log.Printf
+	Warningln = log.Println
+	Error     = log.Print
+	Errorf    = log.Printf
+	Errorln   = log.Println
 )

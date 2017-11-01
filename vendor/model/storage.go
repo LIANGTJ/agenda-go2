@@ -81,7 +81,7 @@ func loadConfig() {
 
 	decoder := json.NewDecoder(fcfg)
 
-	config.LoadConfig(decoder)
+	config.Load(decoder)
 }
 func saveConfig() error {
 	fcfg, err := os.Create(config.AgendaConfigPath())
@@ -90,7 +90,7 @@ func saveConfig() error {
 	}
 	encoder := json.NewEncoder(fcfg)
 
-	return config.SaveConfig(encoder)
+	return config.Save(encoder)
 }
 
 func loadAllRegisteredUser() {

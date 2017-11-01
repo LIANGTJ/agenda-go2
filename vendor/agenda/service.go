@@ -12,11 +12,11 @@ type Username = entity.Username
 type Auth = entity.Auth
 
 type UserInfo = entity.UserInfo
+type UserInfoPublic = entity.UserInfoPublic
 type User = entity.User
 type MeetingInfo = entity.MeetingInfo
 type Meeting = entity.Meeting
 type MeetingTitle = entity.MeetingTitle
-type UserInfoPublicList = entity.UserInfoPublicList
 
 func MakeUserInfo(username Username, password Auth, email, phone string) UserInfo {
 	info := UserInfo{}
@@ -40,9 +40,6 @@ func MakeMeetingInfo(title MeetingTitle, sponsor Username, participators []Usern
 	return info
 }
 
-var NewUser = entity.NewUser
-var NewMeeting = entity.NewMeeting
-
 var registeredUsers = entity.GetAllUsersRegistered()
 var allMeetings = entity.GetAllMeetings()
 
@@ -60,12 +57,13 @@ func SaveAll() {
 // NOTE: Now, assume the operations' actor are always the `Current User`
 
 // RegisterUser ...
-// func RegisterUser(username, password, email, phone string) error {
-//     u := NewUser(MakeUserInfo(username, password, email, phone))
-// func RegisterUser(u *entity.User) error {
 func RegisterUser(uInfo UserInfo) error {
-	u := NewUser(uInfo)
-	err := entity.GetAllUsersRegistered().Add(u)
+	if !uInfo.Name.Valid() {
+		return errors.ErrInvalidUsername
+	}
+
+	u := entity.NewUser(uInfo)
+	err := registeredUsers.Add(u)
 	return err
 }
 
@@ -111,27 +109,20 @@ func LogOut(name Username) error {
 }
 
 // QueryAccountAll queries all accounts
-func QueryAccountAll() UserInfoPublicList {
+func QueryAccountAll() []UserInfoPublic {
 	// NOTE: FIXME: whatever, temporarily ignore the problem that the actor of query is Nil
 	// Hence, now if so, agenda would crash for `Nil.Name`
 	ret := LoginedUser().QueryAccountAll()
 	return ret
 }
 
-// CancelAccount cancels(deletes) a User's account
-func CancelAccount(name Username) error {
-	u := name.RefInAllUsers()
-
-	// check if under login status, TODO: check the login status
-	if logined := LoginedUser(); logined == nil {
+// CancelAccount cancels(deletes) LoginedUser's account
+func CancelAccount() error {
+	u := LoginedUser()
+	if u == nil {
 		return errors.ErrUserNotLogined
-	} else if logined != u {
-		return errors.ErrUserAuthority
 	}
 
-	// del all meeting that this user is sponsor
-	// remove this user from participators of all meeting that this user participate
-	//      if removing cause people count < 0, del the meeting
 	if err := allMeetings.ForEach(func(m *Meeting) error {
 		if m.SponsoredBy(u.Name) {
 			return m.Dissolve()
@@ -151,15 +142,22 @@ func CancelAccount(name Username) error {
 		log.Printf(err.Error())
 	}
 
-	// Notify("CancelAccount: OK.")  TODEL: this should be in `cmd` module, notify dependon error
-
 	err := u.CancelAccount()
 	return err
 }
 
 // SponsorMeeting creates a meeting
 func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
+	u := LoginedUser()
+	if u == nil {
+		return nil, errors.ErrUserNotLogined
+	}
+
 	info := mInfo
+
+	if !info.Title.Valid() {
+		return nil, errors.ErrInvalidMeetingTitle
+	}
 
 	// NOTE: dev-assert
 	if info.Sponsor != nil && info.Sponsor.Name != LoginedUser().Name {
@@ -171,9 +169,7 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 		return nil, errors.ErrExistedMeetingTitle
 	}
 
-	if !LoginedUser().Registered() {
-		return nil, errors.ErrUserNotRegistered
-	}
+	// if !LoginedUser().Registered() { return nil, errors.ErrUserNotRegistered }
 
 	if err := info.Participators.ForEach(func(u *User) error {
 		if !u.Registered() {

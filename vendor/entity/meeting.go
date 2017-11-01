@@ -3,9 +3,11 @@ package entity
 import (
 	"convention/agendaerror"
 	"convention/codec"
-	"log"
 	"time"
+	log "util/logger"
 )
+
+const TimeLayout = time.RFC3339
 
 // Identifier
 type MeetingTitle string
@@ -14,47 +16,13 @@ func (t MeetingTitle) Empty() bool {
 	return t == ""
 }
 func (t MeetingTitle) Valid() bool {
-	// FIXME: not only !empty
-	return !t.Empty()
+	return !t.Empty() // NOTE: may not only !empty
 }
 func (t MeetingTitle) String() string {
 	return string(t)
 }
 
-// TODO: Not sure where to place ...
-var allMeetings = *(NewMeetingList())
-
-func (title MeetingTitle) RefInAllMeetings() *Meeting {
-	return allMeetings.Ref(title)
-}
-func GetAllMeetings() *MeetingList {
-	return &allMeetings
-}
-
-// FIXME:
-var dissolvedMeetings = *(NewMeetingList())
-
-func (title MeetingTitle) RefInDissolvedMeetings() *Meeting {
-	return dissolvedMeetings.Ref(title)
-}
-func GetDissolvedMeetings() *MeetingList {
-	return &dissolvedMeetings
-}
-
-// LoadAllMeeting concretely loads all Meetings
-func LoadAllMeeting(decoder codec.Decoder) {
-	meetings := GetAllMeetings()
-	LoadMeetingList(decoder, meetings)
-}
-
-// SaveAllMeeting concretely saves all Meetings
-func SaveAllMeeting(encoder codec.Encoder) error {
-	meetings := GetAllMeetings()
-	return meetings.Save(encoder)
-}
-
 type MeetingInfo struct {
-	// ID            int
 	Title         MeetingTitle
 	Sponsor       *User
 	Participators UserList
@@ -63,98 +31,18 @@ type MeetingInfo struct {
 	EndTime   time.Time
 }
 type MeetingInfoSerializable struct {
-	Title   MeetingTitle
-	Sponsor Username
-	// Participators []UserInfoSerializable
+	Title         MeetingTitle
+	Sponsor       Username
 	Participators []Username
-	StartTime     string // TODO:
+	StartTime     string
 	EndTime       string
 }
-
-type MeetingInfoListPrintable = MeetingInfoListSerializable
 
 type Meeting struct {
 	MeetingInfo
 }
 
-func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
-	serialInfo := new(MeetingInfoSerializable)
-
-	serialInfo.Title = info.Title
-
-	if sponsor := info.Sponsor; sponsor != nil {
-		serialInfo.Sponsor = sponsor.Name
-	}
-
-	serialInfo.Participators = info.Participators.identifiers()
-
-	serialInfo.StartTime = info.StartTime.Format(TimeLayout)
-	serialInfo.EndTime = info.EndTime.Format(TimeLayout)
-
-	return serialInfo
-}
-func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
-	info := new(MeetingInfo)
-
-	info.Title = infoSerial.Title
-
-	// CHECK: Need ensure Sponsor not nil ?
-	info.Sponsor = infoSerial.Sponsor.RefInAllUsers()
-
-	// TODO: TODEL:
-	for _, name := range infoSerial.Participators {
-		u := name.RefInAllUsers() // CHECK: ditto
-		info.Participators.Add(u)
-	}
-
-	// FIXME: for no error returned
-	var err1, err2 error
-	info.StartTime, err1 = time.Parse(TimeLayout, infoSerial.StartTime)
-	info.EndTime, err2 = time.Parse(TimeLayout, infoSerial.EndTime)
-	if err1 != nil || err2 != nil {
-		log.Fatalf("time.Parse fail when parsing %v / %v", infoSerial.StartTime, infoSerial.EndTime)
-	}
-
-	return info
-}
-
-type MeetingInfoListSerializable []MeetingInfoSerializable
-
-func (ml MeetingInfoListSerializable) Size() int {
-	return len(ml)
-}
-
-func (mlSerial MeetingInfoListSerializable) Deserialize() *MeetingList {
-	ret := NewMeetingList()
-
-	for _, mInfoSerial := range mlSerial {
-
-		// FIXME: these are introduced since up to now, it is possible that UserList contains nil User
-		// FIXME: Not use `== nil` because `mInfoSerial` is a struct
-		if mInfoSerial.Title.Empty() {
-			log.Printf("A No-Title MeetingInfo is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		m := NewMeeting(*(mInfoSerial.Deserialize()))
-		if err := ret.Add(m); err != nil {
-			log.Printf(err.Error()) // CHECK:
-		}
-	}
-	return ret
-}
-
-const TimeLayout = time.RFC3339
-
-// TODO: abstract Meeting(List) and User(List)
-
-// CHECK: if need, use pointer instead of value
 func NewMeeting(info MeetingInfo) *Meeting {
-	if info.Title.Empty() {
-		// FIXME: more elegant ?
-		log.Printf("An empty MeetingInfo is passed to new a Meeting. Just return `nil`.")
-		return nil
-	}
 	m := new(Meeting)
 	m.MeetingInfo = info
 	return m
@@ -165,7 +53,7 @@ func LoadMeeting(decoder codec.Decoder, m *Meeting) {
 
 	err := decoder.Decode(mInfoSerial)
 	if err != nil {
-		log.Fatal(err) // FIXME:
+		log.Fatal(err)
 	}
 	m.MeetingInfo = *(mInfoSerial.Deserialize())
 }
@@ -179,48 +67,41 @@ func (m *Meeting) Save(encoder codec.Encoder) error {
 	return encoder.Encode(*m.MeetingInfo.Serialize())
 }
 
-// SponsoredBy checks if Meeting sponsored by User
-func (m *Meeting) SponsoredBy(name Username) bool {
-	return m.Sponsor.Name == name
-}
+func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
+	mInfoSerial := new(MeetingInfoSerializable)
 
-// ContainsParticipator checks if Meeting's participators contains the User
-func (m *Meeting) ContainsParticipator(name Username) bool {
-	return m.Participators.Contains(name)
-}
+	mInfoSerial.Title = info.Title
 
-// Dissolve deletes the Meeting (, not by a User)
-func (m *Meeting) Dissolve() error {
-	if err := GetAllMeetings().Remove(m); err != nil {
-		log.Printf(err.Error())
-		return err
+	if sponsor := info.Sponsor; sponsor != nil {
+		mInfoSerial.Sponsor = sponsor.Name
 	}
-	if err := GetDissolvedMeetings().Add(m); err != nil {
-		log.Printf(err.Error())
-		return err
-	}
-	return nil
-}
 
-// Exclude removes User from Meeting's participators list
-func (m *Meeting) Exclude(u *User) error {
-	if err := m.Participators.Remove(u); err != nil {
-		log.Printf(err.Error())
-		return err
-	}
-	if m.Participators.Size() <= 0 {
-		return m.Dissolve()
-	}
-	return nil
-}
+	mInfoSerial.Participators = info.Participators.Identifiers()
 
-// Involve adds User to Meeting's participators list
-func (m *Meeting) Involve(u *User) error {
-	if err := m.Participators.Add(u); err != nil {
-		log.Printf(err.Error())
-		return err
+	mInfoSerial.StartTime = info.StartTime.Format(TimeLayout)
+	mInfoSerial.EndTime = info.EndTime.Format(TimeLayout)
+
+	return mInfoSerial
+}
+func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
+	info := new(MeetingInfo)
+
+	info.Title = infoSerial.Title
+
+	// CHECK: Need ensure Sponsor not nil ?
+	info.Sponsor = infoSerial.Sponsor.RefInAllUsers()
+
+	info.Participators.InitFrom(infoSerial.Participators)
+
+	// NOTE: better code ?
+	var err1, err2 error
+	info.StartTime, err1 = time.Parse(TimeLayout, infoSerial.StartTime)
+	info.EndTime, err2 = time.Parse(TimeLayout, infoSerial.EndTime)
+	if err1 != nil || err2 != nil {
+		log.Fatalf("time.Parse fail when parsing %v / %v", infoSerial.StartTime, infoSerial.EndTime)
 	}
-	return nil
+
+	return info
 }
 
 // ................................................................
@@ -231,20 +112,58 @@ type MeetingList struct {
 
 type MeetingListRaw = []*Meeting
 
+type MeetingInfoSerializableList []MeetingInfoSerializable
+
+type MeetingInfoListPrintable = MeetingInfoSerializableList
+
+func (ml *MeetingList) Serialize() MeetingInfoSerializableList {
+	ret := make(MeetingInfoSerializableList, 0, ml.Size())
+
+	ml.ForEach(func(m *Meeting) error {
+		if m == nil {
+			log.Warning("A nil Meeting is to be used. Just SKIP OVER it.")
+			return nil
+		}
+		ret = append(ret, *(m.MeetingInfo.Serialize()))
+		return nil
+	})
+
+	return ret
+}
+
+func (mlSerial MeetingInfoSerializableList) Size() int {
+	return len(mlSerial)
+}
+
+func (mlSerial MeetingInfoSerializableList) Deserialize() *MeetingList {
+	ret := NewMeetingList()
+
+	for _, mInfoSerial := range mlSerial {
+		if mInfoSerial.Title.Empty() {
+			log.Warning("A No-Title MeetingInfo is to be used. Just SKIP OVER it.")
+			continue
+		}
+
+		m := NewMeeting(*(mInfoSerial.Deserialize()))
+		if err := ret.Add(m); err != nil {
+			log.Error(err)
+		}
+	}
+	return ret
+}
+
 func NewMeetingList() *MeetingList {
 	ml := new(MeetingList)
 	ml.Meetings = make(map[MeetingTitle](*Meeting))
 	return ml
 }
 
+// CHECK: Need in-place load method ?
+
 func LoadMeetingList(decoder codec.Decoder, ml *MeetingList) {
-	// for decoder.More() {
-	// 	meeting := LoadedMeeting(decoder)
-	// 	if err := ml.Add(meeting); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
-	mlSerial := new(MeetingInfoListSerializable)
+	// CHECK: Need clear ml ?
+
+	mlSerial := new(MeetingInfoSerializableList)
 	if err := decoder.Decode(mlSerial); err != nil {
 		log.Fatal(err)
 	}
@@ -265,36 +184,21 @@ func LoadedMeetingList(decoder codec.Decoder) *MeetingList {
 	return ml
 }
 
-func (ml *MeetingList) Serialize() MeetingInfoListSerializable {
-	meetings := ml.Slice()
-	ret := make(MeetingInfoListSerializable, 0, ml.Size())
-
-	// logln("ml.Size(): ", ml.Size())
-	// logf("Serialize: %+v \n", meetings)
-	for _, m := range meetings {
-
-		// FIXME: these are introduced since up to now, it is possible that MeetingList contains nil Meeting
-		if m == nil {
-			log.Printf("A nil Meeting is to be used. Just SKIP OVER it.")
-			continue
-		}
-
-		ret = append(ret, *(m.MeetingInfo.Serialize()))
-		// logf("%+v\n", m.MeetingInfo)
-		// smi := *(m.MeetingInfo.Serialize())
-		// logf("%+v\n", smi)
-		// ret = append(ret, smi)
+func (ml *MeetingList) Identifiers() []MeetingTitle {
+	ret := make([]MeetingTitle, 0, ml.Size())
+	for _, mInfoSerial := range ml.Textualize() {
+		ret = append(ret, mInfoSerial.Title)
 	}
 	return ret
 }
 
+// CHECK: better name or conduct ? `ul.PublicInfos` <---> `ml.Textualize`
 func (ml *MeetingList) Textualize() MeetingInfoListPrintable {
 	return ml.Serialize()
 }
 
 func (ml *MeetingList) Save(encoder codec.Encoder) error {
 	sl := ml.Serialize()
-	// logf("sl: %+v\n", sl)
 	return encoder.Encode(sl)
 }
 

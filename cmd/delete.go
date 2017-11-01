@@ -18,6 +18,7 @@ import (
 	"agenda"
 	"errors"
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -44,10 +45,8 @@ var deleteCmd = &cobra.Command{
 
 		} else if userBoolFlag {
 
-			username := agenda.LoginedUser().Name
 			agenda.ClearAllMeeting()
-			agenda.LogOut(username)
-			agenda.CancelAccount(username)
+			agenda.CancelAccount()
 
 		} else {
 
