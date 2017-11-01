@@ -21,8 +21,8 @@ func main() {
 	agenda.LoadAll()
 	defer agenda.SaveAll()
 
-	logf("Users:  %+v\n", entity.GetAllUsersRegistered())
-	logf("Config: %+v\n", config.Config)
+	// logf("Users:  %+v\n", entity.GetAllUsersRegistered())
+	// logf("Config: %+v\n", config.Config)
 
 	if err := cmd.RootCmd.Execute(); err != nil {
 		fmt.Println(err)
