@@ -157,7 +157,9 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 	}
 
 	// NOTE: dev-assert
-	if info.Sponsor != nil && info.Sponsor.Name != LoginedUser().Name {
+	if info.Sponsor == nil {
+		return nil, errors.ErrNilSponsor
+	} else if info.Sponsor.Name != LoginedUser().Name {
 		log.Fatalf("User %v is creating a meeting with Sponsor %v\n", LoginedUser().Name, info.Sponsor.Name)
 	}
 

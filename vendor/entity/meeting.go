@@ -68,6 +68,9 @@ func (m *Meeting) Save(encoder codec.Encoder) error {
 }
 
 func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
+	if info == nil {
+		log.Fatal("nil *MeetingInfo calls Seriablize ...\n")
+	}
 	mInfoSerial := new(MeetingInfoSerializable)
 
 	mInfoSerial.Title = info.Title
@@ -84,6 +87,9 @@ func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 	return mInfoSerial
 }
 func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
+	if infoSerial == nil {
+		log.Fatal("nil *MeetingInfoSerializable calls Deseriablize ...\n")
+	}
 	info := new(MeetingInfo)
 
 	info.Title = infoSerial.Title

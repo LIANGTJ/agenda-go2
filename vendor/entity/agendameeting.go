@@ -43,6 +43,10 @@ func (m *Meeting) SponsoredBy(name Username) bool {
 	if m == nil {
 		return false
 	}
+	if m.Sponsor == nil {
+		log.Warningln("m.SponsoredBy(name) where m.Sponsor == nil.\n")
+		return false
+	}
 	return m.Sponsor.Name == name
 }
 
