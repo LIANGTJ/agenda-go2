@@ -41,10 +41,10 @@ var registerCmd = &cobra.Command{
 		email, _ := cmd.Flags().GetString("email")
 		phone, _ := cmd.Flags().GetString("phone")
 
-		fmt.Println("register called by " + username)
-		fmt.Println("register with info password: " + password)
-		fmt.Println("register with info email: " + email)
-		fmt.Println("register with info phone: " + phone)
+		// fmt.Println("register called by " + username)
+		// fmt.Println("register with info password: " + password)
+		// fmt.Println("register with info email: " + email)
+		// fmt.Println("register with info phone: " + phone)
 
 		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
 
@@ -52,7 +52,7 @@ var registerCmd = &cobra.Command{
 			panic(err)
 		} else {
 			fmt.Print("register sucessfully!\n")
-			agenda.SaveAll()
+			// agenda.SaveAll()
 		}
 	},
 }
