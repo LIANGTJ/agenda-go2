@@ -40,9 +40,6 @@ func MakeMeetingInfo(title MeetingTitle, sponsor Username, participators []Usern
 	return info
 }
 
-var registeredUsers = entity.GetAllUsersRegistered()
-var allMeetings = entity.GetAllMeetings()
-
 func LoadAll() {
 	model.Load()
 	LoadLoginStatus()
@@ -63,7 +60,7 @@ func RegisterUser(uInfo UserInfo) error {
 	}
 
 	u := entity.NewUser(uInfo)
-	err := registeredUsers.Add(u)
+	err := entity.GetAllUsersRegistered().Add(u)
 	return err
 }
 
@@ -123,7 +120,7 @@ func CancelAccount() error {
 		return errors.ErrUserNotLogined
 	}
 
-	if err := allMeetings.ForEach(func(m *Meeting) error {
+	if err := entity.GetAllMeetings().ForEach(func(m *Meeting) error {
 		if m.SponsoredBy(u.Name) {
 			return m.Dissolve()
 		}
@@ -135,7 +132,7 @@ func CancelAccount() error {
 		log.Printf(err.Error())
 	}
 
-	if err := registeredUsers.Remove(u); err != nil {
+	if err := entity.GetAllUsersRegistered().Remove(u); err != nil {
 		log.Printf(err.Error())
 	}
 	if err := u.LogOut(); err != nil {
@@ -342,7 +339,7 @@ func ClearAllMeeting() error {
 		return errors.ErrUserNotLogined
 	}
 
-	if err := allMeetings.ForEach(func(m *Meeting) error {
+	if err := entity.GetAllMeetings().ForEach(func(m *Meeting) error {
 		if m.SponsoredBy(u.Name) {
 			return CancelMeeting(m.Title)
 		}
