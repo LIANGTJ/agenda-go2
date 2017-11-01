@@ -5,10 +5,10 @@ import (
 	"config"
 	"encoding/json"
 	"entity"
-	"log"
 	"os"
 	"sync"
 	agendaLogger "util/logger"
+	log "util/logger"
 )
 
 var wg sync.WaitGroup
@@ -117,7 +117,7 @@ func saveAllRegisteredUser() error {
 	encoder := json.NewEncoder(fout)
 
 	if err := entity.SaveUsersAllRegistered(encoder); err != nil {
-		log.Printf(err.Error()) // TODO: hadnle ?
+		log.Error(err) // TODO: hadnle ?
 		return err
 	}
 	return nil
@@ -147,7 +147,7 @@ func saveAllMeeting() error {
 	encoder := json.NewEncoder(fout)
 
 	if err := entity.SaveAllMeeting(encoder); err != nil {
-		log.Printf(err.Error()) // TODO: hadnle ?
+		log.Error(err) // TODO: hadnle ?
 		return err
 	}
 	return nil

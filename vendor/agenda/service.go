@@ -46,7 +46,7 @@ func LoadAll() {
 }
 func SaveAll() {
 	if err := model.Save(); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 	}
 	SaveLoginStatus()
 }
@@ -70,7 +70,7 @@ func LogIn(name Username, auth Auth) error {
 		return errors.ErrNilUser
 	}
 
-	log.Printf("User %v logs in.", name)
+	log.Printf("User %v logs in.\n", name)
 
 	if LoginedUser() != nil {
 		return errors.ErrLoginedUserAuthority
@@ -99,7 +99,7 @@ func LogOut(name Username) error {
 
 	err := u.LogOut()
 	if err != nil {
-		log.Printf("Failed to log out, error: %q", err.Error())
+		log.Errorf("Failed to log out, error: %q.\n", err.Error())
 	}
 	loginedUser = ""
 	return err
@@ -129,14 +129,14 @@ func CancelAccount() error {
 		}
 		return nil
 	}); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 	}
 
 	if err := entity.GetAllUsersRegistered().Remove(u); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 	}
 	if err := u.LogOut(); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 	}
 
 	err := u.CancelAccount()
@@ -157,7 +157,9 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 	}
 
 	// NOTE: dev-assert
-	if info.Sponsor != nil && info.Sponsor.Name != LoginedUser().Name {
+	if info.Sponsor == nil {
+		return nil, errors.ErrNilSponsor
+	} else if info.Sponsor.Name != LoginedUser().Name {
 		log.Fatalf("User %v is creating a meeting with Sponsor %v\n", LoginedUser().Name, info.Sponsor.Name)
 	}
 
@@ -174,7 +176,7 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 		}
 		return nil
 	}); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 		return nil, err
 	}
 
@@ -188,13 +190,13 @@ func SponsorMeeting(mInfo MeetingInfo) (*Meeting, error) {
 		}
 		return nil
 	}); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 		return nil, err
 	}
 
 	m, err := LoginedUser().SponsorMeeting(info)
 	if err != nil {
-		log.Printf("Failed to sponsor meeting, error: %q", err.Error())
+		log.Errorf("Failed to sponsor meeting, error: %q.\n", err.Error())
 	}
 	return m, err
 }
@@ -230,7 +232,7 @@ func AddParticipatorToMeeting(title MeetingTitle, name Username) error {
 
 	err := u.AddParticipatorToMeeting(meeting, user)
 	if err != nil {
-		log.Printf("Failed to add participator into Meeting, error: %q", err.Error())
+		log.Errorf("Failed to add participator into Meeting, error: %q.\n", err.Error())
 	}
 	return err
 }
@@ -262,7 +264,7 @@ func RemoveParticipatorFromMeeting(title MeetingTitle, name Username) error {
 
 	err := u.RemoveParticipatorFromMeeting(meeting, user)
 	if err != nil {
-		log.Printf("Failed to remove participator from Meeting, error: %q", err.Error())
+		log.Errorf("Failed to remove participator from Meeting, error: %q.\n", err.Error())
 	}
 	return err
 }
@@ -294,7 +296,7 @@ func CancelMeeting(title MeetingTitle) error {
 
 	err := u.CancelMeeting(meeting)
 	if err != nil {
-		log.Printf("Failed to cancel Meeting, error: %q", err.Error())
+		log.Errorf("Failed to cancel Meeting, error: %q.\n", err.Error())
 	}
 	return err
 }
@@ -325,7 +327,7 @@ func QuitMeeting(title MeetingTitle) error {
 
 	err := u.QuitMeeting(meeting)
 	if err != nil {
-		log.Printf("Failed to quit Meeting, error: %q", err.Error())
+		log.Errorf("Failed to quit Meeting, error: %q.\n", err.Error())
 	}
 	return err
 }
@@ -345,7 +347,7 @@ func ClearAllMeeting() error {
 		}
 		return nil
 	}); err != nil {
-		log.Printf("Failed to clear all Meetings, error: %q", err.Error())
+		log.Errorf("Failed to clear all Meetings, error: %q.\n", err.Error())
 		return err
 	}
 	return nil

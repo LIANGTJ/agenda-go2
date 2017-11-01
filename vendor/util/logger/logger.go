@@ -2,6 +2,7 @@ package logger
 
 import (
 	"config"
+	"fmt"
 	"log"
 	"os"
 )
@@ -9,51 +10,73 @@ import (
 var Logger *log.Logger
 
 func init() {
-	flog, err := os.Create(config.LogPath())
+	flog, err := os.OpenFile(config.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
 	if err != nil {
 		log.Panic(err)
 	}
-	Logger = log.New(flog, "agenda: ", log.LstdFlags|log.Lshortfile)
+	// logWriter := io.MultiWriter(flog, os.Stderr)
+	logWriter := flog
+	Logger = log.New(logWriter, "agenda: ", log.LstdFlags|log.Lshortfile)
 }
 
 func Print(v ...interface{})                 { Logger.SetPrefix("[info]"); Logger.Print(v...) }
 func Printf(format string, v ...interface{}) { Logger.SetPrefix("[info]"); Logger.Printf(format, v...) }
 func Println(v ...interface{})               { Logger.SetPrefix("[info]"); Logger.Println(v...) }
-func Fatal(v ...interface{})                 { Logger.SetPrefix("[fatal]"); Logger.Fatal(v...) }
-func Fatalf(format string, v ...interface{}) { Logger.SetPrefix("[fatal]"); Logger.Fatalf(format, v...) }
-func Fatalln(v ...interface{})               { Logger.SetPrefix("[fatal]"); Logger.Fatalln(v...) }
-func Panic(v ...interface{})                 { Logger.SetPrefix("[panic]"); Logger.Panic(v...) }
-func Panicf(format string, v ...interface{}) { Logger.SetPrefix("[panic]"); Logger.Panicf(format, v...) }
-func Panicln(v ...interface{})               { Logger.SetPrefix("[panic]"); Logger.Panicln(v...) }
 
-func Warning(v ...interface{}) { Logger.SetPrefix("[warn]"); Logger.Print(v...) }
+func Warning(v ...interface{}) { Logger.SetPrefix("[warning]"); Logger.Print(v...) }
 func Warningf(format string, v ...interface{}) {
-	Logger.SetPrefix("[warn]")
+	Logger.SetPrefix("[warning]")
 	Logger.Printf(format, v...)
 }
-func Warningln(v ...interface{})             { Logger.SetPrefix("[warn]"); Logger.Println(v...) }
-func Error(v ...interface{})                 { Logger.SetPrefix("[error]"); Logger.Print(v...) }
-func Errorf(format string, v ...interface{}) { Logger.SetPrefix("[error]"); Logger.Printf(format, v...) }
-func Errorln(v ...interface{})               { Logger.SetPrefix("[error]"); Logger.Println(v...) }
+func Warningln(v ...interface{}) { Logger.SetPrefix("[warning]"); Logger.Println(v...) }
 
-// var (
-// 	Print   = Logger.Print
-// 	Printf  = Logger.Printf
-// 	Println = Logger.Println
-// 	Fatal   = Logger.Fatal
-// 	Fatalf  = Logger.Fatalf
-// 	Fatalln = Logger.Fatalln
-// 	Panic   = Logger.Panic
-// 	Panicf  = Logger.Panicf
-// 	Panicln = Logger.Panicln
-// 	// TODO:
-// 	Warning   = Logger.Print
-// 	Warningf  = Logger.Printf
-// 	Warningln = Logger.Println
-// 	Error     = Logger.Print
-// 	Errorf    = Logger.Printf
-// 	Errorln   = Logger.Println
-// )
+func Error(v ...interface{}) {
+	Logger.SetPrefix("[error]")
+	Logger.Print(v...)
+	fmt.Fprint(os.Stderr, v...)
+}
+func Errorf(format string, v ...interface{}) {
+	Logger.SetPrefix("[error]")
+	Logger.Printf(format, v...)
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+func Errorln(v ...interface{}) {
+	Logger.SetPrefix("[error]")
+	Logger.Println(v...)
+	fmt.Fprintln(os.Stderr, v...)
+}
+
+func Fatal(v ...interface{}) {
+	Logger.SetPrefix("[fatal]")
+	Logger.Fatal(v...)
+	fmt.Fprint(os.Stderr, v...)
+}
+func Fatalf(format string, v ...interface{}) {
+	Logger.SetPrefix("[fatal]")
+	Logger.Fatalf(format, v...)
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+func Fatalln(v ...interface{}) {
+	Logger.SetPrefix("[fatal]")
+	Logger.Fatalln(v...)
+	fmt.Fprintln(os.Stderr, v...)
+}
+
+func Panic(v ...interface{}) {
+	Logger.SetPrefix("[panic]")
+	Logger.Panic(v...)
+	fmt.Fprint(os.Stderr, v...)
+}
+func Panicf(format string, v ...interface{}) {
+	Logger.SetPrefix("[panic]")
+	Logger.Panicf(format, v...)
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+func Panicln(v ...interface{}) {
+	Logger.SetPrefix("[panic]")
+	Logger.Panicln(v...)
+	fmt.Fprintln(os.Stderr, v...)
+}
 
 // var (
 // 	Print   = log.Print

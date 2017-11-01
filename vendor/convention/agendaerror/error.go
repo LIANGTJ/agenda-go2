@@ -20,6 +20,7 @@ var (
 
 	ErrUserAuthority = errors.New("only the User self can modify his/her account")
 
+	ErrNilSponsor            = errors.New("the sponsor cannot be nil")
 	ErrSponsorAuthority      = errors.New("only the sponsor can modify the meeting")
 	ErrSponsorResponsibility = errors.New("the sponsor can only cancel but not quit the meeting")
 

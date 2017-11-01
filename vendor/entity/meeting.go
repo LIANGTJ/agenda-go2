@@ -68,6 +68,9 @@ func (m *Meeting) Save(encoder codec.Encoder) error {
 }
 
 func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
+	if info == nil {
+		log.Fatal("nil *MeetingInfo calls Seriablize ...\n")
+	}
 	mInfoSerial := new(MeetingInfoSerializable)
 
 	mInfoSerial.Title = info.Title
@@ -84,6 +87,9 @@ func (info *MeetingInfo) Serialize() *MeetingInfoSerializable {
 	return mInfoSerial
 }
 func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
+	if infoSerial == nil {
+		log.Fatal("nil *MeetingInfoSerializable calls Deseriablize ...\n")
+	}
 	info := new(MeetingInfo)
 
 	info.Title = infoSerial.Title
@@ -98,7 +104,7 @@ func (infoSerial *MeetingInfoSerializable) Deserialize() *MeetingInfo {
 	info.StartTime, err1 = time.Parse(TimeLayout, infoSerial.StartTime)
 	info.EndTime, err2 = time.Parse(TimeLayout, infoSerial.EndTime)
 	if err1 != nil || err2 != nil {
-		log.Fatalf("time.Parse fail when parsing %v / %v", infoSerial.StartTime, infoSerial.EndTime)
+		log.Fatalf("time.Parse fail when parsing %v / %v\n", infoSerial.StartTime, infoSerial.EndTime)
 	}
 
 	return info
@@ -170,7 +176,7 @@ func LoadMeetingList(decoder codec.Decoder, ml *MeetingList) {
 	for _, mInfoSerial := range *mlSerial {
 		m := NewMeeting(*(mInfoSerial.Deserialize()))
 		if err := ml.Add(m); err != nil {
-			log.Printf(err.Error())
+			log.Error(err)
 		}
 	}
 }

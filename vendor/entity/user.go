@@ -201,7 +201,7 @@ func (ul *UserList) PublicInfos() []UserInfoPublic {
 
 	ul.ForEach(func(u *User) error {
 		if u == nil {
-			log.Warningf("A nil User is to be used. Just SKIP OVER it.")
+			log.Warning("A nil User is to be used. Just SKIP OVER it.\n")
 			return nil
 		}
 		ret = append(ret, u.UserInfoPublic)
