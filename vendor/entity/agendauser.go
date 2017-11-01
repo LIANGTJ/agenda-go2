@@ -60,7 +60,7 @@ func (u *User) FreeWhen(start, end time.Time) bool {
 		}
 		return nil
 	}); err != nil {
-		log.Printf(err.Error())
+		log.Error(err)
 		return false
 	}
 
@@ -80,7 +80,7 @@ func (u *User) QueryAccountAll() []UserInfoPublic {
 		username = u.Name
 	}
 	ret := GetAllUsersRegistered().PublicInfos()
-	log.Printf("User %v queries all accounts.", username)
+	log.Printf("User %v queries all accounts.\n", username)
 	return ret
 }
 
@@ -89,7 +89,7 @@ func (u *User) CancelAccount() error {
 	if u == nil {
 		return agendaerror.ErrNilUser
 	}
-	log.Printf("User %v canceled account.", u.Name)
+	log.Printf("User %v canceled account.\n", u.Name)
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (u *User) SponsorMeeting(info MeetingInfo) (*Meeting, error) {
 	}
 	m := NewMeeting(info)
 	err := GetAllMeetings().Add(m)
-	log.Printf("User %v sponsors meeting %v.", u.Name, info)
+	log.Printf("User %v sponsors meeting %v.\n", u.Name, info)
 	return m, err
 }
 
@@ -111,7 +111,7 @@ func (u *User) AddParticipatorToMeeting(meeting *Meeting, user *User) error {
 	}
 
 	err := meeting.Involve(user)
-	log.Printf("User %v adds participator %v into Meeting %v.", u.Name, user.Name, meeting.Title)
+	log.Printf("User %v adds participator %v into Meeting %v.\n", u.Name, user.Name, meeting.Title)
 	return err
 }
 
@@ -121,7 +121,7 @@ func (u *User) RemoveParticipatorFromMeeting(meeting *Meeting, user *User) error
 		return agendaerror.ErrNilUser
 	}
 	err := meeting.Exclude(user)
-	log.Printf("User %v removes participator %v from Meeting %v.", u.Name, user.Name, meeting.Title)
+	log.Printf("User %v removes participator %v from Meeting %v.\n", u.Name, user.Name, meeting.Title)
 	return err
 }
 
@@ -131,7 +131,7 @@ func (u *User) LogOut() error {
 		return agendaerror.ErrNilUser
 	}
 
-	log.Printf("User %v logs out.", u.Name)
+	log.Printf("User %v logs out.\n", u.Name)
 	return nil
 }
 
@@ -142,7 +142,7 @@ func (u *User) QueryMeetingByInterval(start, end time.Time) MeetingInfoListPrint
 		username = u.Name
 	}
 	ret := u.involvedMeetings().Textualize()
-	log.Printf("User %v queries meetings in time interval %v ~ %v.", username, start, end)
+	log.Printf("User %v queries meetings in time interval %v ~ %v.\n", username, start, end)
 	return ret
 }
 
@@ -158,7 +158,7 @@ func (u *User) CancelMeeting(meeting *Meeting) error {
 	}
 
 	err := meeting.Dissolve()
-	log.Printf("User %v cancels Meeting %v.", u.Name, meeting.Title)
+	log.Printf("User %v cancels Meeting %v.\n", u.Name, meeting.Title)
 	return err
 }
 
@@ -169,6 +169,6 @@ func (u *User) QuitMeeting(meeting *Meeting) error {
 	}
 
 	err := meeting.Exclude(u)
-	log.Printf("User %v quits Meeting %v.", u.Name, meeting.Title)
+	log.Printf("User %v quits Meeting %v.\n", u.Name, meeting.Title)
 	return err
 }

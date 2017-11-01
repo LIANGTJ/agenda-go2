@@ -64,7 +64,7 @@ func (m *Meeting) Dissolve() error {
 		log.Print(err)
 		return err
 	}
-	log.Printf("Meeting %v is dissolved.", m.Title)
+	log.Printf("Meeting %v is dissolved.\n", m.Title)
 	return nil
 }
 
@@ -84,7 +84,7 @@ func (m *Meeting) Exclude(u *User) error {
 	if m.Participators.Size() <= 0 {
 		return m.Dissolve()
 	}
-	log.Printf("User %v is excluded from Meeting %v.", u.Name, m.Title)
+	log.Printf("User %v is excluded from Meeting %v.\n", u.Name, m.Title)
 	return nil
 }
 
@@ -101,6 +101,6 @@ func (m *Meeting) Involve(u *User) error {
 		log.Print(err)
 		return err
 	}
-	log.Printf("User %v is involved in Meeting %v.", u.Name, m.Title)
+	log.Printf("User %v is involved in Meeting %v.\n", u.Name, m.Title)
 	return nil
 }

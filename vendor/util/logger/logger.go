@@ -2,6 +2,7 @@ package logger
 
 import (
 	"config"
+	"io"
 	"log"
 	"os"
 )
@@ -9,11 +10,11 @@ import (
 var Logger *log.Logger
 
 func init() {
-	flog, err := os.Create(config.LogPath())
+	flog, err := os.OpenFile(config.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
 	if err != nil {
 		log.Panic(err)
 	}
-	Logger = log.New(flog, "agenda: ", log.LstdFlags|log.Lshortfile)
+	Logger = log.New(io.MultiWriter(flog, os.Stderr), "agenda: ", log.LstdFlags|log.Lshortfile)
 }
 
 func Print(v ...interface{})                 { Logger.SetPrefix("[info]"); Logger.Print(v...) }
