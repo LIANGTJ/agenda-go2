@@ -43,8 +43,11 @@ var addCmd = &cobra.Command{
 		// fmt.Printf("start: %v end: %v\n", startTimeFlag, endTimeFlag)
 		startTime, _ := time.Parse("2006-01-02 15:04:05", startTimeFlag)
 		endTime, _ := time.Parse("2006-01-02 15:04:05", endTimeFlag)
+
 		fmt.Printf("start: %v end: %v\n", startTime, endTime)
+
 		participators := make([]agenda.Username, 0, len(participatorsFlag))
+		participators = append(participators, agenda.LoginedUser().Name)
 		for _, participator := range participatorsFlag {
 			participators = append(participators, agenda.Username(participator))
 		}
@@ -55,7 +58,7 @@ var addCmd = &cobra.Command{
 		if _, err := agenda.SponsorMeeting(meetingInfo); err != nil {
 			panic(err)
 		}
-		agenda.SaveAll()
+		// agenda.SaveAll()
 		fmt.Print("sucessfully create meeting\n")
 
 	},

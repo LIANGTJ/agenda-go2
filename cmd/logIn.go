@@ -14,61 +14,57 @@
 
 package cmd
 
-// import (
-// 	"fmt"
-// 	"github.com/spf13/cobra"
+import (
+	"fmt"
+	"github.com/spf13/cobra"
 
-// 	"agenda"
-// )
+	"agenda"
+)
 
-// // registerCmd represents the register command
-// var registerCmd = &cobra.Command{
-// 	Use:   "register",
-// 	Short: "register for further use",
-// 	Long: `register for further use and u need to input username, password.
-// 	it will be better if email and phone is provider`,
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		defer func() {
-// 			if err := recover(); err != nil {
-// 				fmt.Printf("Error[register]： %v\n", err)
-// 			}
-// 		}()
+// loginCmd represents the login command
+var loginCmd = &cobra.Command{
+	Use:   "login",
+	Short: "login for further use",
+	Long: `login for further use and u need to input username, password.
+	it will be better if email and phone is provider`,
+	Run: func(cmd *cobra.Command, args []string) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Printf("Error[login]： %v\n", err)
+			}
+		}()
 
-// 		fmt.Println("register called")
+		fmt.Println("login called")
 
-// 		username, _ := cmd.Flags().GetString("username")
-// 		password, _ := cmd.Flags().GetString("password")
-// 		email, _ := cmd.Flags().GetString("email")
-// 		phone, _ := cmd.Flags().GetString("phone")
+		username, _ := cmd.Flags().GetString("username")
+		password, _ := cmd.Flags().GetString("password")
 
-// 		fmt.Println("register called by " + username)
-// 		fmt.Println("register with info password: " + password)
+		fmt.Println("login called by " + username)
+		fmt.Println("login with info password: " + password)
 
-// 		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
+		if err := agenda.LogIn(agenda.Username(username), agenda.Auth(password)); err != nil {
+			panic(err)
+		} else {
+			fmt.Print("login sucessfully!\n")
+			// agenda.SaveAll()
+		}
+	},
+}
 
-// 		if err := agenda.RegisterUser(info); err != nil {
-// 			panic(err)
-// 		} else {
-// 			fmt.Print("register sucessfully!\n")
-// 			agenda.SaveAll()
-// 		}
-// 	},
-// }
+func init() {
+	RootCmd.AddCommand(loginCmd)
 
-// func init() {
-// 	RootCmd.AddCommand(registerCmd)
+	// Here you will define your flags and configuration settings.
 
-// 	// Here you will define your flags and configuration settings.
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// loginCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-// 	// Cobra supports Persistent Flags which will work for this command
-// 	// and all subcommands, e.g.:
-// 	// registerCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-// 	// Cobra supports local flags which will only run when this command
-// 	// is called directly, e.g.:
-// 	// registerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	loginCmd.Flags().StringP("username", "u", "Anonymous", "login info for username")
+	loginCmd.Flags().StringP("password", "p", "", "login info for password")
 
-// 	registerCmd.Flags().StringP("username", "u", "Anonymous", "register info for username")
-// 	registerCmd.Flags().StringP("password", "p", "", "register info for password")
-
-// }
+}

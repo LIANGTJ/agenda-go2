@@ -45,21 +45,21 @@ var deleteCmd = &cobra.Command{
 
 		} else if userBoolFlag {
 
-			agenda.ClearAllMeeting()
-			agenda.CancelAccount()
-
+			// agenda.ClearAllMeeting()
+			if err := agenda.CancelAccount(); err != nil {
+				panic(err)
+			}
+			fmt.Print("CancelAccount successfully\n")
 		} else {
 
 			title := agenda.MeetingTitle(titleFlag)
-			if err := agenda.QuitMeeting(title); err != nil {
-				panic(err)
-			}
+
 			if err := agenda.CancelMeeting(title); err != nil {
 				panic(err)
 			}
 
 		}
-		agenda.SaveAll()
+		// agenda.SaveAll()
 
 	},
 }

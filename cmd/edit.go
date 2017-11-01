@@ -38,11 +38,11 @@ var editCmd = &cobra.Command{
 
 		titleFlag, _ := cmd.Flags().GetString("title")
 		userNameFlag, _ := cmd.Flags().GetString("username")
-		addBoolFlag, _ := cmd.Flags().GetBool("add")
+		addBoolFlag, _ := cmd.Flags().GetBool("invite")
 		delBoolFlag, _ := cmd.Flags().GetBool("del")
 
 		if addBoolFlag && delBoolFlag {
-			panic(errors.New("The flag add(a) and del(d) can't appear at the same time"))
+			panic(errors.New("The flag invite(i) and del(d) can't appear at the same time"))
 
 		} else if addBoolFlag {
 
@@ -58,7 +58,7 @@ var editCmd = &cobra.Command{
 			}
 		}
 
-		agenda.SaveAll()
+		// agenda.SaveAll()
 
 	},
 }
@@ -78,7 +78,7 @@ func init() {
 
 	editCmd.Flags().StringP("title", "t", "", "edit info for title")
 	editCmd.Flags().StringP("username", "u", "", "edit info for username")
-	editCmd.Flags().BoolP("add", "a", false, "edit info for add")
+	editCmd.Flags().BoolP("invite", "i", false, "edit info for add")
 	editCmd.Flags().BoolP("del", "d", false, "edit info for del")
 
 }
