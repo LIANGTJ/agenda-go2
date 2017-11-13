@@ -14,27 +14,6 @@ import (
 var wg sync.WaitGroup
 var fin = os.Stdin
 
-var (
-	// files     = config.Config["flies"].(map[string](interface{}))
-	filepaths = config.NeededFilepaths()
-)
-
-func ensurePathsNeededExist() {
-	if err := os.MkdirAll(config.WorkingDir(), 0777); err != nil {
-		log.Fatal(err)
-	}
-
-	for _, path := range filepaths {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			f, err := os.Create(path)
-			defer f.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-}
-
 func backupOldFiles() {
 	if err := os.MkdirAll(config.BackupDir(), 0777); err != nil {
 		log.Fatal(err)
@@ -43,8 +22,6 @@ func backupOldFiles() {
 
 // Load : load all resources for agenda.
 func Load() {
-	ensurePathsNeededExist()
-
 	loadConfig()
 	loadAllRegisteredUser()
 	loadAllMeeting()

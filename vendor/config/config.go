@@ -74,3 +74,28 @@ func UserLoginStatusPath() string { return WorkingDir() + "curUser.txt" }
 func BackupDir() string {
 	return WorkingDir() + "backup/"
 }
+
+var (
+	// files     = Config["flies"].(map[string](interface{}))
+	filepaths = NeededFilepaths()
+)
+
+func ensurePathsNeededExist() {
+	if err := os.MkdirAll(WorkingDir(), 0777); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, path := range filepaths {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			f, err := os.Create(path)
+			defer f.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+}
+
+func init() {
+	ensurePathsNeededExist()
+}
