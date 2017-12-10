@@ -1,0 +1,315 @@
+FORMAT: 1A
+HOST: http://agendago.apiblueprint.org/
+
+# agenda
+
+Agenda is a simple API allowing consumers to schedule meeting on-line.
+
+
+
+# Data Structures
+
+## Username (string)
+
+## User (object)
+
++ identifier (string)
++ password (string)
++ email (string)
++ phone (string)
+
+
+## Meeting (object)
+
++ identifier (string)
++ sponsor (Username)
++ participator (array[Username])
++ starttime (string)
++ endtime (string)
+
+
+
+# Group Session
+
+Resource operations related to a session in the API.
+
+## Session [/v1/session]
+
+### Login [POST]
+
+Login for a new session, in general as a registered user.
+
++ Attributes
+    + identifier: `pml` (string, required)
+    + password: `none` (string, required)
+
++ Response 200 (application/json)
+
+        {
+            "access-token": "abcdefg",
+            "permissions":["user","admin"],
+        }
+
++ Response 200 (application/json)
+
+        {
+            "access-token": "ABCDEFG",
+            "permissions":["user"],
+        }
+
+### Logout [DELETE]
+
+Logout for a session, in general as a registered user.
+
++ Attributes
+    + access-token (string, required)
+
++ Response 204
+
+
+
+# Group User
+
+Resource operations related to a user in the API.
+
+## User-Key [/v1/user/getkey{?username,password}]
+
++ Parameters
+    - username : `root` (string, required) - User Name
+    - password : `pass` (required)
+
+### Get User Key [GET]
+
+get a security key for operations later
+
++ Response 200 (application/json)
+
+        {
+            "key":"1e3576bt",
+            "permissions":["user","admin"],
+        }
+
+
+## User [/v1/user/{identifier}]
+
++ Parameters
+    - identifier : `1` (string, required) - User Identifier
+
+### Get User by ID [GET]
+
++ Attributes (User)
+
++ Response 200 (application/json)
+
+        {
+            "id" : 1,
+            "username":"zhang3",
+            "password":"zhang",
+            "email":"zhang3@mail2.sysu.edu.cn"
+        }
+
+### Delete User by ID [DELETE]
+
++ Attributes
+    + access-token string, required
+
++ Response 204
+
+
+## User's Meetings [/v1/user/{identifier}/meetings{?filter}]
+
++ Parameters
+    - identifier : `1` (string, required) - User Identifier
+    - filter : `sponsored` (string, optional) - filtership between the requested Meetings and the User
+        - Default : `all`
+        - Members
+            - `all`
+            - `sponsored`
+            - `participated`
+
+### List those filtered Meetings [GET]
+
+List the Meetings matching the `filter` for the User.
+
++ Response 200 (application/json)
+
+        [
+            {
+                "title":"iso900",
+                "participators": [
+                    "zhang3",
+                    "somebody",
+                ],
+                "start-time":"2015-08-05T08:40:51.620Z",
+                "end-time":"2015-10-05T08:40:51.620Z",
+            }
+        ]
+
+### Delete those filtered Meetings [DELETE]
+
++ Response 204
+
+
+
+# Group Users
+
+Resources related to a users in the API.
+
+## Users Collection [/v1/users]
+
+### List all Users [GET]
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id":1,
+                "username":"zhang3",
+                "password":"zhang",
+                "email":"zhang3@mail2.sysu.edu.cn",
+            },{
+                "id":2,
+                "username":"li4",
+                "password":"li",
+                "email":"li4@mail2.sysu.edu.cn",
+            }
+        ]
+
+### Register, Create a New User [POST]
+
++ Request (application/json)
+
+    + Attributes
+        + username (string, required)
+
+    + Body
+
+            {
+                "username":"zhang3",
+                "password":"zhang",
+                "email":"zhang3@mail2.sysu.edu.cn"
+            }
+
++ Response 201 (application/json)
+
+    + Attributes (User)
+
+    + Headers
+
+            Location: /users/1
+
+    + Body
+
+            {
+                "id": 1,
+                "username":"zhang3",
+                "password":"zhang",
+                "email":"zhang3@mail2.sysu.edu.cn"
+            }
+
+
+
+# Group Meeting
+
+## Meeting [/v1/meeting/{identifier}]
+
++ Parameters
+    - identifier : `1` (string, required) - Meeting Identifier
+
+### Get Meeting by ID [GET]
+
++ Response 200 (application/json)
+
+        {
+            "title":"iso900",
+            "participators": [
+                "zhang3",
+                "somebody",
+            ],
+            "start-time":"2015-08-05T08:40:51.620Z",
+            "end-time":"2015-10-05T08:40:51.620Z",
+        }
+
+### Delete Meeting by ID [DELETE]
+
++ Attributes
+    + access-token (string, required)
+
++ Response 204
+
+### Modify Meeting by ID [PATCH]
+
++ Attributes
+    + op (string, required) - Represent the action PATCH does
+    + location (string, required) - Represent where the action occurs
+    + target (string, required) - Represent the target of the action
+
++ Request (application/json)
+
+            {
+                "op": "remove",
+                "from": "/participators",
+                "value": "somebody",
+            }
+
++ Response 204
+
+
+# Group Meetings
+
+## Meetings Collection [/v1/meetings{?starttime,endtime}]
+
++ Parameters
+    - starttime : `0` (number, required)
+    - endtime : `1512982691720` (number, required)
+
+### List the Meetings in given time interval [GET]
+
++ Response 200 (application/json)
+
+        [
+            {
+                "title":"iso900",
+                "participators": [
+                    "zhang3",
+                    "somebody",
+                ],
+                "start-time":"2015-08-05T08:40:51.620Z",
+                "end-time":"2015-10-05T08:40:51.620Z",
+            }
+        ]
+
+### Create(Sponsor) a New Meeting [POST]
+
++ Request (application/json)
+
+        {
+            "title":"iso900",
+            "participators": [
+                "zhang3",
+                "somebody",
+            ],
+            "start-time":"2015-08-05T08:40:51.620Z",
+            "end-time":"2015-10-05T08:40:51.620Z",
+        }
+
++ Response 201 (application/json)
+
+    + Headers
+
+            Location: /meetings/iso900
+
+    + Body
+
+            {
+                "title":"iso900",
+                "participators": [
+                    "zhang3",
+                    "somebody",
+                ],
+                "start-time":"2015-08-05T08:40:51.620Z",
+                "end-time":"2015-10-05T08:40:51.620Z",
+            }
+
+
+
