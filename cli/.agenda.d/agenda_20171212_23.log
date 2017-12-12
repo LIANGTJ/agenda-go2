@@ -1,1 +1,2 @@
 [info]2017/12/12 23:01:05 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.
+[info]2017/12/12 23:25:11 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.

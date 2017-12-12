@@ -1,0 +1,15 @@
+[info]2017/11/13 14:35:57 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.
+[info]2017/11/13 14:36:18 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.
+[warning]2017/11/13 14:36:18 logger.go:31: m.SponsoredBy(name) where m.Sponsor == nil.
+
+[warning]2017/11/13 14:36:18 logger.go:31: m.SponsoredBy(name) where m.Sponsor == nil.
+
+[warning]2017/11/13 14:36:18 logger.go:31: m.SponsoredBy(name) where m.Sponsor == nil.
+
+[warning]2017/11/13 14:36:18 logger.go:31: m.SponsoredBy(name) where m.Sponsor == nil.
+
+[info]2017/11/13 14:36:18 logger.go:23: User Anonymous queries meetings in time interval 0001-01-01 00:00:00 +0000 UTC ~ 0001-01-01 00:00:00 +0000 UTC.
+[info]2017/11/13 14:36:33 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.
+[info]2017/11/13 14:36:33 logger.go:23: User Anonymous queries all accounts.
+[info]2017/11/13 14:38:11 logger.go:24: Can't read config: open ./.cobra.yaml: The system cannot find the file specified.
+[info]2017/11/13 14:38:11 logger.go:23: User Anonymous queries all accounts.

@@ -1,0 +1,17 @@
+body {
+    background-color: #eff7de;
+}
+
+#phone-info input {
+    display: block;
+}
+
+table,
+th,
+td {
+    border: 1px solid gray;
+}
+
+table {
+    text-align: left;
+}

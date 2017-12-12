@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-cmn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> Table of phones' infos </title>
+
+    <link rel="stylesheet" href="static/style/base.css" />
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>...</th>
+                <th>手机销量</th>
+                <th>Q1</th>
+                <th>Q2</th>
+                <th>Q3</th>
+                <th>Q3 同比</th>
+                <th>Q3 比上季</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr>
+                <td>{{.Brand}}</td>
+                <td>{{.SalesTotal}}</td>
+                <td>{{.SalesQ1}}</td>
+                <td>{{.SalesQ2}}</td>
+                <td>{{.SalesQ3}}</td>
+                <td>{{.SalesDiffQ3SPLY}}</td>
+                <td>{{.SalesDiffQ3LP}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+
+</html>
