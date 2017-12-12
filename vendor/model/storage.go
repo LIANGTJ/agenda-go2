@@ -53,11 +53,10 @@ func loadConfig() {
 	if info, err := fcfg.Stat(); err != nil {
 		log.Fatal(err)
 	} else if info.Size() == 0 {
-		return
+		log.Printf("File `%v` is empty.\n", fcfg.Name())
 	}
 
 	decoder := json.NewDecoder(fcfg)
-
 	config.Load(decoder)
 }
 func saveConfig() error {
@@ -65,8 +64,8 @@ func saveConfig() error {
 	if err != nil {
 		log.Fatalf("Save config fail, for config path: %v\n", config.AgendaConfigPath())
 	}
-	encoder := json.NewEncoder(fcfg)
 
+	encoder := json.NewEncoder(fcfg)
 	return config.Save(encoder)
 }
 
@@ -79,11 +78,10 @@ func loadAllRegisteredUser() {
 	if info, err := fin.Stat(); err != nil {
 		log.Fatal(err)
 	} else if info.Size() == 0 {
-		return
+		log.Printf("File `%v` is empty.\n", fin.Name())
 	}
 
 	decoder := json.NewDecoder(fin)
-
 	entity.LoadUsersAllRegistered(decoder)
 }
 func saveAllRegisteredUser() error {
@@ -91,8 +89,8 @@ func saveAllRegisteredUser() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	encoder := json.NewEncoder(fout)
 
+	encoder := json.NewEncoder(fout)
 	if err := entity.SaveUsersAllRegistered(encoder); err != nil {
 		log.Error(err) // TODO: hadnle ?
 		return err
@@ -109,11 +107,10 @@ func loadAllMeeting() {
 	if info, err := fin.Stat(); err != nil {
 		log.Fatal(err)
 	} else if info.Size() == 0 {
-		return
+		log.Printf("File `%v` is empty.\n", fin.Name())
 	}
 
 	decoder := json.NewDecoder(fin)
-
 	entity.LoadAllMeeting(decoder)
 }
 func saveAllMeeting() error {
@@ -121,8 +118,8 @@ func saveAllMeeting() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	encoder := json.NewEncoder(fout)
 
+	encoder := json.NewEncoder(fout)
 	if err := entity.SaveAllMeeting(encoder); err != nil {
 		log.Error(err) // TODO: hadnle ?
 		return err

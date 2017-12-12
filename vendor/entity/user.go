@@ -4,6 +4,7 @@ import (
 	"auth"
 	"convention/agendaerror"
 	"convention/codec"
+	"io"
 	log "util/logger"
 )
 
@@ -151,7 +152,13 @@ func LoadUserList(decoder codec.Decoder, ul *UserList) {
 
 	ulSerial := new(UserInfoSerializableList)
 	if err := decoder.Decode(ulSerial); err != nil {
-		log.Fatal(err)
+		switch err {
+		case io.EOF:
+			// FIXME: not sure io.EOF would always indicate empty Decoder, however I don't think this check should be placed otherwhere
+			break
+		default:
+			log.Fatal(err)
+		}
 	}
 	for _, uInfoSerial := range *ulSerial {
 		u := NewUser(uInfoSerial)

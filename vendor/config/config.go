@@ -2,6 +2,7 @@ package config
 
 import (
 	"convention/codec"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -22,7 +23,13 @@ func Load(decoder codec.Decoder) {
 	cfg := &(Config)
 	// CHECK: Need check if have already exactly loaded ALL config (i.e. eof) ?
 	if err := decoder.Decode(cfg); err != nil {
-		log.Fatal(err)
+		switch err {
+		case io.EOF:
+			// FIXME: not sure io.EOF would always indicate empty Decoder, however I don't think this check should be placed otherwhere
+			break
+		default:
+			log.Fatal(err)
+		}
 	}
 }
 

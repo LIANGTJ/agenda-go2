@@ -3,6 +3,7 @@ package entity
 import (
 	"convention/agendaerror"
 	"convention/codec"
+	"io"
 	"time"
 	log "util/logger"
 )
@@ -171,7 +172,13 @@ func LoadMeetingList(decoder codec.Decoder, ml *MeetingList) {
 
 	mlSerial := new(MeetingInfoSerializableList)
 	if err := decoder.Decode(mlSerial); err != nil {
-		log.Fatal(err)
+		switch err {
+		case io.EOF:
+			// FIXME: not sure io.EOF would always indicate empty Decoder, however I don't think this check should be placed otherwhere
+			break
+		default:
+			log.Fatal(err)
+		}
 	}
 	for _, mInfoSerial := range *mlSerial {
 		m := NewMeeting(*(mInfoSerial.Deserialize()))
