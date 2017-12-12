@@ -38,14 +38,17 @@ Resource operations related to a session in the API.
 Login for a new session, in general as a registered user.
 
 + Request (application/json)
-
+        
     + Attributes
     
-        + identifier: `John` (string, required)
-        + password: `abc123` (string, required)
+            + identifier: `zhang3` (string, required)
+            + password: `abc123` (string, required)
         
 
 + Response 200 (application/json)
+    + Headers
+    
+            Set-Cookies: `zhang3_cookies=zhang3`
     
     + Body
 
@@ -59,8 +62,12 @@ Login for a new session, in general as a registered user.
 
 Logout for a session, in general as a registered user.
 
-+ Attributes
-    + access-token (string, required)
++ Request
+
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
+
 
 + Response 204
 
@@ -80,11 +87,23 @@ Resource operations related to a user in the API.
 
 get a security key for operations later
 
++ Request
+
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
+
 + Response 200 (application/json)
 
-        {
-            "key":"1e3576bt",
-        }
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
+    
+    + Body
+            
+            {
+                "key":"1e3576bt",
+            }
 
 
 ## User [/v1/user/{identifier}]
@@ -93,8 +112,12 @@ get a security key for operations later
     - identifier : `1` (string, required) - User Identifier
 
 ### Get User by ID [GET]
++ Request
 
-+ Attributes (User)
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
+
 
 + Response 200 (application/json)
 
@@ -107,8 +130,11 @@ get a security key for operations later
 
 ### Delete User by ID [DELETE]
 
-+ Attributes
-    + access-token string, required
++ Request
+
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
 
 + Response 204
 
@@ -127,24 +153,39 @@ get a security key for operations later
 ### List those filtered Meetings [GET]
 
 List the Meetings matching the `filter` for the User.
++ Request
+
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
 
 + Response 200 (application/json)
+    
+    + Headers
+        
+            Set-Cookies: `zhang3_cookies=zhang3`
 
-        [
-            {
-                "title":"iso900",
-                "participators": [
-                    "zhang3",
-                    "somebody",
-                ],
-                "start-time":"2015-08-05T08:40:51.620Z",
-                "end-time":"2015-10-05T08:40:51.620Z",
-            }
-        ]
+    + Body
+
+            [
+                {
+                    "title":"iso900",
+                    "participators": [
+                        "zhang3",
+                        "somebody",
+                    ],
+                    "start-time":"2015-08-05T08:40:51.620Z",
+                    "end-time":"2015-10-05T08:40:51.620Z",
+                }
+            ]
 
 ### Delete those filtered Meetings [DELETE]
 
 + Response 204
+    
+     + Headers
+        
+            Set-Cookies: `zhang3_cookies=zhang3`
 
 
 
@@ -155,30 +196,47 @@ Resources related to a users in the API.
 ## Users Collection [/v1/users]
 
 ### List all Users [GET]
+    
+    
+     + Headers
+            
+            Cookies: `zhang3_cookies=zhang3`
+            
 
 + Response 200 (application/json)
 
-        [
-            {
-                "id":1,
-                "username":"zhang3",
-                "password":"zhang",
-                "email":"zhang3@mail2.sysu.edu.cn",
-            },{
-                "id":2,
-                "username":"li4",
-                "password":"li",
-                "email":"li4@mail2.sysu.edu.cn",
-            }
-        ]
+    + Headers
+        
+            Set-Cookies: `zhang3_cookies=zhang3`
+
+    + Body
+
+            [
+                {
+                    "id":1,
+                    "username":"zhang3",
+                    "password":"zhang",
+                    "email":"zhang3@mail2.sysu.edu.cn",
+                },{
+                    "id":2,
+                    "username":"li4",
+                    "password":"li",
+                    "email":"li4@mail2.sysu.edu.cn",
+                }
+            ]
 
 ### Register, Create a New User [POST]
 
 + Request (application/json)
 
-    + Attributes
-        + username (string, required)
 
+    + Attributes
+            + username (string, required)
+            + password (string, required)
+
+    + Headers
+        
+            Cookies: `zhang3_cookies=zhang3`
     + Body
 
             {
@@ -194,6 +252,7 @@ Resources related to a users in the API.
     + Headers
 
             Location: /users/1
+            Set-Cookies: `zhang3_cookies=zhang3`
 
     + Body
 
@@ -217,20 +276,29 @@ Resources related to a users in the API.
 
 + Response 200 (application/json)
 
-        {
-            "title":"iso900",
-            "participators": [
-                "zhang3",
-                "somebody",
-            ],
-            "start-time":"2015-08-05T08:40:51.620Z",
-            "end-time":"2015-10-05T08:40:51.620Z",
-        }
+    + Headers
+    
+            Set-Cookies: `zhang3_cookies=zhang3`
+            
+    + Body
+    
+
+            {
+                "title":"iso900",
+                "participators": [
+                    "zhang3",
+                    "somebody",
+                ],
+                "start-time":"2015-08-05T08:40:51.620Z",
+                "end-time":"2015-10-05T08:40:51.620Z",
+            }
 
 ### Delete Meeting by ID [DELETE]
 
-+ Attributes
-    + access-token (string, required)
++ Request
+    + Headers
+    
+            Cookies: `zhang3_cookies=zhang3`
 
 + Response 204
 
@@ -243,7 +311,11 @@ Resources related to a users in the API.
     + target (string, required) - Represent the target of the action
 
 + Request (application/json)
-
+    + Headers
+    
+            Set-Cookies: `zhang3_cookies=zhang3`
+    + Body
+    
             {
                 "op": "remove",
                 "from": "/participators",
@@ -262,10 +334,41 @@ Resources related to a users in the API.
     - endtime : `1512982691720` (number, required)
 
 ### List the Meetings in given time interval [GET]
++ Request
+    + Headers
+    
+            Cookies: `zhang3_cookies`
+            
 
 + Response 200 (application/json)
+    + Headers
+    
+            Set-Cookies: `zhang3_cookies`
+            
+    + Body
+    
 
-        [
+            [
+                {
+                    "title":"iso900",
+                    "participators": [
+                        "zhang3",
+                        "somebody",
+                    ],
+                    "start-time":"2015-08-05T08:40:51.620Z",
+                    "end-time":"2015-10-05T08:40:51.620Z",
+                }
+            ]
+
+### Create(Sponsor) a New Meeting [POST]
+
++ Request (application/json)
+    + Headers
+    
+            Cookies: `zhang3_cookies`
+            
+    + Body
+
             {
                 "title":"iso900",
                 "participators": [
@@ -275,27 +378,13 @@ Resources related to a users in the API.
                 "start-time":"2015-08-05T08:40:51.620Z",
                 "end-time":"2015-10-05T08:40:51.620Z",
             }
-        ]
-
-### Create(Sponsor) a New Meeting [POST]
-
-+ Request (application/json)
-
-        {
-            "title":"iso900",
-            "participators": [
-                "zhang3",
-                "somebody",
-            ],
-            "start-time":"2015-08-05T08:40:51.620Z",
-            "end-time":"2015-10-05T08:40:51.620Z",
-        }
 
 + Response 201 (application/json)
 
     + Headers
 
             Location: /meetings/iso900
+            Set-Cookies: `zhang3_cookies`
 
     + Body
 
