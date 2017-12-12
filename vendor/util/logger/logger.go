@@ -10,72 +10,110 @@ import (
 var Logger *log.Logger
 
 func init() {
-	flog, err := os.OpenFile(config.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
-	if err != nil {
-		log.Panic(err)
+	logWriter := os.Stderr
+	if !config.LogToConsoleMode() {
+		flog, err := os.OpenFile(config.LogPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+		if err != nil {
+			log.Panic(err)
+		}
+		logWriter = flog
 	}
 	// logWriter := io.MultiWriter(flog, os.Stderr)
-	logWriter := flog
-	Logger = log.New(logWriter, "agenda: ", log.LstdFlags|log.Lshortfile)
+
+	Logger = log.New(logWriter, "cloudgo: ", log.LstdFlags|log.Lshortfile)
 }
 
-func Print(v ...interface{})                 { Logger.SetPrefix("[info]"); Logger.Print(v...) }
-func Printf(format string, v ...interface{}) { Logger.SetPrefix("[info]"); Logger.Printf(format, v...) }
-func Println(v ...interface{})               { Logger.SetPrefix("[info]"); Logger.Println(v...) }
+func init() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
+}
 
-func Warning(v ...interface{}) { Logger.SetPrefix("[warning]"); Logger.Print(v...) }
+func Info(v ...interface{}) {
+	Logger.SetPrefix("[info]")
+	Logger.Output(2, fmt.Sprint(v...))
+}
+func Infof(format string, v ...interface{}) {
+	Logger.SetPrefix("[info]")
+	Logger.Output(2, fmt.Sprintf(format, v...))
+}
+func Infoln(v ...interface{}) {
+	Logger.SetPrefix("[info]")
+	Logger.Output(2, fmt.Sprintln(v...))
+}
+
+func Warning(v ...interface{}) {
+	Logger.SetPrefix("[warning]")
+	Logger.Output(2, fmt.Sprint(v...))
+}
 func Warningf(format string, v ...interface{}) {
 	Logger.SetPrefix("[warning]")
-	Logger.Printf(format, v...)
+	Logger.Output(2, fmt.Sprintf(format, v...))
 }
-func Warningln(v ...interface{}) { Logger.SetPrefix("[warning]"); Logger.Println(v...) }
+func Warningln(v ...interface{}) {
+	Logger.SetPrefix("[warning]")
+	Logger.Output(2, fmt.Sprintln(v...))
+}
 
 func Error(v ...interface{}) {
 	Logger.SetPrefix("[error]")
-	Logger.Print(v...)
-	fmt.Fprint(os.Stderr, v...)
+	Logger.Output(2, fmt.Sprint(v...))
 }
 func Errorf(format string, v ...interface{}) {
 	Logger.SetPrefix("[error]")
-	Logger.Printf(format, v...)
-	fmt.Fprintf(os.Stderr, format, v...)
+	Logger.Output(2, fmt.Sprintf(format, v...))
 }
 func Errorln(v ...interface{}) {
 	Logger.SetPrefix("[error]")
-	Logger.Println(v...)
-	fmt.Fprintln(os.Stderr, v...)
+	Logger.Output(2, fmt.Sprintln(v...))
 }
+
+var (
+	Print   = Info
+	Printf  = Infof
+	Println = Infoln
+)
 
 func Fatal(v ...interface{}) {
 	Logger.SetPrefix("[fatal]")
-	Logger.Fatal(v...)
-	fmt.Fprint(os.Stderr, v...)
+	Logger.Output(2, fmt.Sprint(v...))
+
+	log.Output(2, fmt.Sprint(v...))
+	os.Exit(1)
 }
 func Fatalf(format string, v ...interface{}) {
 	Logger.SetPrefix("[fatal]")
-	Logger.Fatalf(format, v...)
-	fmt.Fprintf(os.Stderr, format, v...)
+	Logger.Output(2, fmt.Sprintf(format, v...))
+
+	log.Output(2, fmt.Sprintf(format, v...))
+	os.Exit(1)
 }
 func Fatalln(v ...interface{}) {
 	Logger.SetPrefix("[fatal]")
-	Logger.Fatalln(v...)
-	fmt.Fprintln(os.Stderr, v...)
+	Logger.Output(2, fmt.Sprintln(v...))
+
+	log.Output(2, fmt.Sprintln(v...))
+	os.Exit(1)
 }
 
 func Panic(v ...interface{}) {
 	Logger.SetPrefix("[panic]")
-	Logger.Panic(v...)
-	fmt.Fprint(os.Stderr, v...)
+	s := fmt.Sprint(v...)
+	Logger.Output(2, s)
+	log.Output(2, s)
+	panic(s)
 }
 func Panicf(format string, v ...interface{}) {
 	Logger.SetPrefix("[panic]")
-	Logger.Panicf(format, v...)
-	fmt.Fprintf(os.Stderr, format, v...)
+	s := fmt.Sprintf(format, v...)
+	Logger.Output(2, s)
+	log.Output(2, s)
+	panic(s)
 }
 func Panicln(v ...interface{}) {
 	Logger.SetPrefix("[panic]")
-	Logger.Panicln(v...)
-	fmt.Fprintln(os.Stderr, v...)
+	s := fmt.Sprintln(v...)
+	Logger.Output(2, s)
+	log.Output(2, s)
+	panic(s)
 }
 
 // var (

@@ -8,8 +8,10 @@ import (
 )
 
 var debugMode = true
+var logToConsoleMode = true
 
-func DebugMode() bool { return debugMode }
+func DebugMode() bool        { return debugMode }
+func LogToConsoleMode() bool { return logToConsoleMode }
 
 // type Config = map[string](interface{})
 
@@ -76,8 +78,7 @@ func BackupDir() string {
 }
 
 var (
-	// files     = Config["flies"].(map[string](interface{}))
-	filepaths = NeededFilepaths()
+// files     = Config["flies"].(map[string](interface{}))
 )
 
 func ensurePathsNeededExist() {
@@ -85,7 +86,7 @@ func ensurePathsNeededExist() {
 		log.Fatal(err)
 	}
 
-	for _, path := range filepaths {
+	for _, path := range NeededFilepaths() {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			f, err := os.Create(path)
 			defer f.Close()
