@@ -1,9 +1,15 @@
 package agenda
 
 import (
+	"bytes"
 	errors "convention/agendaerror"
+	"encoding/json"
 	"entity"
+	"fmt"
+	"math/rand"
 	"model"
+	"net/http"
+	"strings"
 	"time"
 	log "util/logger"
 )
@@ -49,6 +55,42 @@ func SaveAll() {
 		log.Error(err)
 	}
 	SaveLoginStatus()
+}
+
+// Server ...
+
+const (
+	DefaultPort = "8080"
+)
+
+type Agenda struct {
+	*Server
+}
+
+func New() *Agenda {
+	mux := NewServeMux()
+	mux.HandleFunc("/api/test", apiTestHandler())
+
+	mux.HandleFunc("/unknown/", sayDeveloping)
+
+	mux.HandleFunc("/say/", sayhelloName)
+
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./asset/"))))
+
+	server := NewServer()
+	server.SetHandler(mux)
+
+	agenda := new(Agenda)
+	agenda.Server = server
+
+	return agenda
+}
+
+func (agenda *Agenda) Listen(addr string) error {
+	if addr == "" {
+		addr = DefaultPort
+	}
+	return agenda.Server.Listen(addr)
 }
 
 // NOTE: Now, assume the operations' actor are always the `Current User`
@@ -351,4 +393,50 @@ func ClearAllMeeting() error {
 		return err
 	}
 	return nil
+}
+
+// ...
+
+// detail handlers, etc ... ----------------------------------------------------------------
+
+func sayhelloName(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	segments := strings.Split(r.URL.Path, "/")
+	name := segments[len(segments)-1]
+	fmt.Fprintf(w, "Hello %v!\n", name)
+}
+
+func sayDeveloping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+
+	fmt.Fprintf(w, "Developing!\n")
+	fmt.Fprintf(w, "Now NotImplemented!\n")
+}
+
+func apiTestHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		res := struct {
+			ID      string `json:"id"`
+			Content string `json:"content"`
+		}{ID: "9527", Content: "Hello from Go!\n"}
+
+		// json.NewEncoder(w).Encode(res)
+		j, err := json.Marshal(res)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rand.Seed(time.Now().UnixNano())
+		prettyPrint := rand.Float32() < 0.5
+		if prettyPrint {
+			var out bytes.Buffer
+			json.Indent(&out, j, "", "\t")
+			j = out.Bytes()
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(j)
+	}
 }
