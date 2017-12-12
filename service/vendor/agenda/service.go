@@ -63,34 +63,30 @@ const (
 	DefaultPort = "8080"
 )
 
-type Agenda struct {
-	*Server
-}
+var (
+	agenda struct {
+		*Server
+	}
+)
 
-func New() *Agenda {
+func init() {
 	mux := NewServeMux()
 	mux.HandleFunc("/api/test", apiTestHandler())
-
 	mux.HandleFunc("/unknown/", sayDeveloping)
-
 	mux.HandleFunc("/say/", sayhelloName)
-
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./asset/"))))
 
-	server := NewServer()
-	server.SetHandler(mux)
+	srv := NewServer()
+	srv.SetHandler(mux)
 
-	agenda := new(Agenda)
-	agenda.Server = server
-
-	return agenda
+	agenda.Server = srv
 }
 
-func (agenda *Agenda) Listen(addr string) error {
+func Listen(addr string) error {
 	if addr == "" {
 		addr = DefaultPort
 	}
-	return agenda.Server.Listen(addr)
+	return agenda.Listen(addr)
 }
 
 // NOTE: Now, assume the operations' actor are always the `Current User`

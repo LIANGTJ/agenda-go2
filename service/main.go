@@ -29,8 +29,7 @@ func main() {
 	agenda.LoadAll()
 	defer agenda.SaveAll()
 
-	server := agenda.New()
-	err := server.Listen(":" + port)
+	err := agenda.Listen(":" + port)
 	if err != nil {
 		log.Fatal(err)
 	}
