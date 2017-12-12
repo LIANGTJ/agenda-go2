@@ -1,10 +1,8 @@
 FORMAT: 1A
-HOST: http://agendago.apiblueprint.org/
 
 # agenda
 
 Agenda is a simple API allowing consumers to schedule meeting on-line.
-
 
 
 # Data Structures
@@ -39,23 +37,23 @@ Resource operations related to a session in the API.
 
 Login for a new session, in general as a registered user.
 
-+ Attributes
-    + identifier: `pml` (string, required)
-    + password: `none` (string, required)
++ Request (application/json)
+
+    + Attributes
+    
+        + identifier: `John` (string, required)
+        + password: `abc123` (string, required)
+        
 
 + Response 200 (application/json)
+    
+    + Body
 
-        {
-            "access-token": "abcdefg",
-            "permissions":["user","admin"],
-        }
+            {
+                "access-token": "abcdefg",
+              
+            }
 
-+ Response 200 (application/json)
-
-        {
-            "access-token": "ABCDEFG",
-            "permissions":["user"],
-        }
 
 ### Logout [DELETE]
 
@@ -86,7 +84,6 @@ get a security key for operations later
 
         {
             "key":"1e3576bt",
-            "permissions":["user","admin"],
         }
 
 
@@ -240,6 +237,7 @@ Resources related to a users in the API.
 ### Modify Meeting by ID [PATCH]
 
 + Attributes
+
     + op (string, required) - Represent the action PATCH does
     + location (string, required) - Represent where the action occurs
     + target (string, required) - Represent the target of the action
@@ -310,6 +308,3 @@ Resources related to a users in the API.
                 "start-time":"2015-08-05T08:40:51.620Z",
                 "end-time":"2015-10-05T08:40:51.620Z",
             }
-
-
-
