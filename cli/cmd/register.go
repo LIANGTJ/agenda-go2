@@ -17,8 +17,11 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-
-	"agenda"
+	"net/http"
+	"io/ioutil"
+	"bytes"
+	// "agenda"
+	"encoding/json"
 )
 
 // registerCmd represents the register command
@@ -28,37 +31,60 @@ var registerCmd = &cobra.Command{
 	Long: `register for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("registere called")
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("Error[register]： %v\n", err)
+				fmt.Printf("Error[registerd4]： %v\n", err)
 			}
 		}()
 
-		fmt.Println("register called")
-
+		fmt.Println("registere called")
+		fmt.Println("register called--2")
 		username, _ := cmd.Flags().GetString("username")
 		password, _ := cmd.Flags().GetString("password")
 		email, _ := cmd.Flags().GetString("email")
 		phone, _ := cmd.Flags().GetString("phone")
-
-		// fmt.Println("register called by " + username)
-		// fmt.Println("register with info password: " + password)
-		// fmt.Println("register with info email: " + email)
-		// fmt.Println("register with info phone: " + phone)
-
-		info := agenda.MakeUserInfo(agenda.Username(username), agenda.Auth(password), email, phone)
-
-		if err := agenda.RegisterUser(info); err != nil {
-			panic(err)
-		} else {
-			fmt.Print("register sucessfully!\n")
-			// agenda.SaveAll()
+		fmt.Println("register called2")
+		type User struct {
+			Username string
+			Password string
+			Email string
+			Phone string
 		}
+		fmt.Println("register called2")
+		client := &http.Client {}
+		var registerURL = "https://private-12576-agenda32.apiary-mock.com/v1/users"
+		u := User {
+			username,
+			password,
+			email,
+			phone,
+		}
+		buf := new(bytes.Buffer)
+		json.NewEncoder(buf).Encode(u)
+		req, err := http.NewRequest(http.MethodPost, registerURL,buf)
+		if err != nil {
+			fmt.Print("[error1]")
+			panic(err)
+		}
+		req.Header.Add("Content-Type","application/json")
+		resp, err := client.Do(req)//发送请求
+		if err != nil {
+			fmt.Println("Fatal error ", err.Error())
+		}
+		defer resp.Body.Close()//一定要关闭resp.Body
+		content, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Fatal error ", err.Error())
+		}
+	
+		fmt.Println(string(content))
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(registerCmd)
+
 
 	// Here you will define your flags and configuration settings.
 
