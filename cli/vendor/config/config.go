@@ -6,6 +6,10 @@ import (
     "time"
 )
 
+var logToConsoleMode = true
+
+func LogToConsoleMode() bool { return logToConsoleMode }
+
 var neededFilePaths = []string {
     UserLoginedStatusPath(),
     LogPath(),
