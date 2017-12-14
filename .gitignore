@@ -19,5 +19,5 @@ binly.recycle/
 .vscode/
 
 # ignore test data
-.agenda.d/*
+cli/.agenda.d/*
 !.agenda.d/config.json
