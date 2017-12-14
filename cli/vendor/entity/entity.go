@@ -2,6 +2,8 @@ package entity
 
 import (
 	"time"
+	// log "util/logger"
+	"errors"
 )
 
 type Meeting struct {
@@ -24,24 +26,38 @@ type User struct {
 	Phone 	 string
 }
 
-func (*Meeting) NewMeeting(title string, 
-	startTime, endTime time.Time, participators []string) Meeting {
+func NewMeeting(title string, participators []string, startTime, endTime time.Time) (*Meeting, error) {
+	var err error = nil
+	if startTime.After(endTime) {
+		// log.Fatal("the start-time should be before the end-time")
+		err = errors.New("the start-time must go ahead of the end-time")
+	}
 
-	return Meeting {
+	meeting := Meeting {
 		title,
 		participators,
 		startTime,
 		endTime,
 	}
+	return &meeting, err
 }
 
-func (*User) NewUser(username, password, email, phone string) User {
+func NewUser(username, password, email, phone string) *User {
 
-	return User {
+	u := User {
 		username,
 		password,
 		email,
 		phone,
 	}
+	return &u
 }
+
+func ( u *User) Invalid() bool {
+	return u.Username == "" || u.Password == ""
+}
+
+
+
+
 

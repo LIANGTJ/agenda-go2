@@ -1,19 +1,21 @@
-package agenda
+package status
 
 import (
 	"config"
 	"io/ioutil"
 	"os"
+	// "errors"
 	log "util/logger"
 )
 
 var loginedUser = ""
+var debugMode = true
 
-func LoginedUser() string {
-	
-	return loginedUser
+func DeBugMode() bool { return debugMode }
+func AnotherUserExisted() bool { return loginedUser != "" }
 
-}
+func LoginedUser() string { return loginedUser }
+func AddLoginedUser(user string) { loginedUser = user }
 
 func LoadLoginStatus()  {
 	buf, err := ioutil.ReadFile(config.UserLoginedStatusPath())
@@ -33,7 +35,6 @@ func SaveLoginStatus()  {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// fout.WriteString(string(loginedUser))
 	fout.WriteString(loginedUser)
 
 }

@@ -21,7 +21,9 @@ func NeededFilePath() []string {
 }
 
 func WorkingDir() string {
-    location , existed := os.LookupEnv("HOME")
+    // location , existed := os.LookupEnv("HOME")
+    var location string
+    var existed = false
     if !existed {
         location = "."
     }

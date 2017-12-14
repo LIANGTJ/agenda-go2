@@ -1,11 +1,8 @@
 package agendaHttp
 
-import (
-	"time"
-)
 
 var(
-	protocol                      = "https"
+	protocol                      = "https://"
 	host                          = "private-12576-agenda32.apiary-mock.com"
 	registerPath                  = "/v1/users"
 	loginPath                     = "/v1/session"
@@ -25,11 +22,19 @@ var(
 func RegisterURL() string {
 	return protocol + host + registerPath
 }
+
+func LoginURL() string {
+	return protocol + host + loginPath
+}
+
+func LogoutURL() string{
+	return protocol + host + logoutPath
+}
 func GetUserByIDURL(ID string) string {
 	return protocol + host + getUserByIDPath + ID
 }
 
-func DeleteUserByIDURL(ID stirng) string {
+func DeleteUserByIDURL(ID string) string {
 	return protocol + host + deleteUserByIDPath + ID
 }
 
@@ -53,11 +58,11 @@ func DeleteMeetingByIDURL(ID string) string {
 	return protocol + host + deleteMeetingByIDPath + ID
 }
 
-func ModifyMeetingByIDURL(ID stirng) string {
+func ModifyMeetingByIDURL(ID string) string {
 	return protocol + host + modifyMeetingByIDPath + ID
 }
 
-func ListMeetingInTimeIntervalURL(startTime, endTime stirng) string{
+func ListMeetingInTimeIntervalURL(startTime, endTime string) string{
 	return protocol + host + listMeetingInTimeIntervalPath + "starttime=" + startTime + "&endtime" + endTime
 }
 func CreateMeetingURL() string {

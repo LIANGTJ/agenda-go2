@@ -1,22 +1,14 @@
 package model
-// import (
-// 	"log"
-// 	"encoding/json"
-// 	"os"
-// 	"config"
+import (
+	"status"
 	
-// )
+)
 
 
-// func loadCurUser() {
-// 	fin, err := os.Open(config.UserLoginedStatusPath())
-// 	if err != nil {
-// 		log.Fatalf("[Error]: load curUser fail, for curUser path: %v\n", config.UserLoginedStatusPath())
-// 	}
-	
+func SaveAll() {
+	status.SaveLoginStatus()
+}
 
-
-	
-
-	
-// }
+func LoadAll() {
+	status.LoadLoginStatus()
+}

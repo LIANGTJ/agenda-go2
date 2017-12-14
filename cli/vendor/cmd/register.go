@@ -17,11 +17,16 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"net/http"
-	"io/ioutil"
-	"bytes"
-	// "agenda"
-	"encoding/json"
+	"log"
+	"agendaHttp"
+	// "net/http"
+	// "io/ioutil"
+	// "bytes"
+	// "os"
+	// "encoding/json"
+	// log "util/logger"
+	"entity"
+	// "status"
 )
 
 // registerCmd represents the register command
@@ -31,54 +36,61 @@ var registerCmd = &cobra.Command{
 	Long: `register for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("registere called")
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("Error[registerd4]： %v\n", err)
+				log.Printf("Error[registerd]： %v\n", err)
 			}
 		}()
 
-		fmt.Println("registere called")
-		fmt.Println("register called--2")
+		fmt.Println("register called")
 		username, _ := cmd.Flags().GetString("username")
 		password, _ := cmd.Flags().GetString("password")
 		email, _ := cmd.Flags().GetString("email")
 		phone, _ := cmd.Flags().GetString("phone")
-		fmt.Println("register called2")
-		type User struct {
-			Username string
-			Password string
-			Email string
-			Phone string
-		}
-		fmt.Println("register called2")
-		client := &http.Client {}
-		var registerURL = "https://private-12576-agenda32.apiary-mock.com/v1/users"
-		u := User {
-			username,
-			password,
-			email,
-			phone,
-		}
-		buf := new(bytes.Buffer)
-		json.NewEncoder(buf).Encode(u)
-		req, err := http.NewRequest(http.MethodPost, registerURL,buf)
+		
+		// user := entity.NewUser(username, password, email, phone)
+		// if user.Invalid() {
+		// 	panic("[error]: user regiestered invalid")
+		// }
+		decoder, err := agendaHttp.Register(username, password, email, phone)
 		if err != nil {
-			fmt.Print("[error1]")
 			panic(err)
 		}
-		req.Header.Add("Content-Type","application/json")
-		resp, err := client.Do(req)//发送请求
-		if err != nil {
-			fmt.Println("Fatal error ", err.Error())
+		
+		if decoder != nil {
+			var user entity.User
+			decoder.Decode(&user)
+			fmt.Println("register successfully", user.Username)
 		}
-		defer resp.Body.Close()//一定要关闭resp.Body
-		content, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Fatal error ", err.Error())
-		}
-	
-		fmt.Println(string(content))
+
+
+		
+		
+		
+
+		// // client := &http.Client {}
+		// // var u interface{} = user
+		// buf := new(bytes.Buffer)
+		// json.NewEncoder(buf).Encode(user)
+		// registerURL := agendaHttp.RegisterURL()
+		// // req, err := http.NewRequest(http.MethodPost, registerURL, buf)
+		// resp, err := http.Post(registerURL, "application/json", buf)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// // req.Header.Add("Content-Type","application/json")
+		// // resp, err := client.Do(req)
+		// // if err != nil {
+		// // 	panic(err)
+		// // }
+		// if resp.Status[0] != '2' {
+		// 	agendaHttp.ErrorHandle(resp)
+		// 	fmt.Println("register falied", user.Username)
+		// 	// fmt.Println(resp.)
+		// }
+		// defer resp.Body.Close() //一定要关闭resp.Body
+		
+		// resp.Write(os.Stdout)
 	},
 }
 
