@@ -36,7 +36,7 @@ func UserLoginedStatusPath() string {
 }
 
 func LogPath() string {
-    return WorkingDir() + "agenda_" + time.Now().Format("20170102_15") + ".log"
+    return WorkingDir() + "/agenda_" + time.Now().Format("20170102_15") + ".log"
 }
 
 func ensurePathNeededExist() {
