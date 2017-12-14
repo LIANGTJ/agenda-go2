@@ -27,7 +27,7 @@ func WorkingDir() string {
     //     location = "."
     // }
     location := "."
-    workDir := location + "/agenda.d"
+    workDir := location + "/.agenda.d"
     return workDir
 }
 
