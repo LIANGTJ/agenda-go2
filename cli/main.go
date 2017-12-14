@@ -7,8 +7,7 @@ import (
 	"model"
 )
 
-// var logln = util.Log
-// var logf = util.Logf
+
 
 func init() {
 }

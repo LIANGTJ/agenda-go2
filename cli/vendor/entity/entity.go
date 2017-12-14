@@ -15,16 +15,17 @@ type Meeting struct {
 
 }
 
-type MeetingList []Meeting
-
-
-type User struct {
-
-	Username string
-	Password string
-	Email 	 string
-	Phone 	 string
+type SerializedMeeting struct {
+	
+	Title 			string
+	Participators 	[]string
+	StartTime 		string
+	EndTime 		string
+	
 }
+
+type MeetingList []Meeting
+type SerializedMeetingList []SerializedMeeting
 
 func NewMeeting(title string, participators []string, startTime, endTime time.Time) (*Meeting, error) {
 	var err error = nil
@@ -42,20 +43,40 @@ func NewMeeting(title string, participators []string, startTime, endTime time.Ti
 	return &meeting, err
 }
 
+func (m *Meeting)Serialized() *SerializedMeeting{
+	return &SerializedMeeting{
+		m.Title,
+		m.Participators,
+		m.StartTime.String(),
+		m.EndTime.String(),
+	}
+}
+
+type User struct {
+	
+		Username string
+		Password string
+		Email 	 string
+		Phone 	 string
+	}
+	
+type UserList []User
+
 func NewUser(username, password, email, phone string) *User {
 
-	u := User {
+	return 	&User {
 		username,
 		password,
 		email,
 		phone,
 	}
-	return &u
+	
 }
 
 func ( u *User) Invalid() bool {
 	return u.Username == "" || u.Password == ""
 }
+
 
 
 

@@ -12,10 +12,10 @@ var loginedUser = ""
 var debugMode = true
 
 func DeBugMode() bool { return debugMode }
-func AnotherUserExisted() bool { return loginedUser != "" }
+func UserExisted() bool { return loginedUser != "" }
 
 func LoginedUser() string { return loginedUser }
-func AddLoginedUser(user string) { loginedUser = user }
+func ChangeLoginedUser(user string) { loginedUser = user }
 
 func LoadLoginStatus()  {
 	buf, err := ioutil.ReadFile(config.UserLoginedStatusPath())

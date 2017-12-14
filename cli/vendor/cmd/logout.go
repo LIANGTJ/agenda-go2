@@ -17,62 +17,43 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"agendaHttp"
 	// "log"
-	"status"
-	
+	"agendaHttp"
 )
 
-// loginCmd represents the login command
-var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "login for further use",
-	Long: `login for further use and u need to input username, password.
+// logoutCmd represents the logout command
+var logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "logout ",
+	Long: `logout for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
 	Run: func(cmd *cobra.Command, args []string) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("Error[login]： %v\n", err)
+				fmt.Printf("Error[logout]： %v\n", err)
 			}
 		}()
 
-		// fmt.Println("login called")
+		fmt.Println("logout called")
 
-		username, _ := cmd.Flags().GetString("username")
-		password, _ := cmd.Flags().GetString("password")
-		
-		
-		fmt.Println("login called by " + username)
-		fmt.Println("login with info password: " + password)
-
-		err := agendaHttp.Login(username, password)
-		if err != nil {
+		if err := agendaHttp.Logout(); err != nil {
 			panic(err)
-		}
-		
-		fmt.Println("Login Sucessfully", status.LoginedUser())
-
-		
-
-
-		
+		} 
+		fmt.Println("logout sucessfully")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(loginCmd)
+	RootCmd.AddCommand(logoutCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// loginCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// logoutCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	loginCmd.Flags().StringP("username", "u", "Anonymous", "login info for username")
-	loginCmd.Flags().StringP("password", "p", "", "login info for password")
+	// logoutCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }

@@ -11,7 +11,7 @@ var(
 	deleteUserByIDPath            = "/v1/user/"
 	listFilteredMeetingPath       = "/v1/user/"
 	deleteFilteredMeetingPath     = "/v1/user/"
-	listAllUsersPath              = "/v1/users"
+	QueryAccountAllPath              = "/v1/users"
 	getMeetingByIDPath            = "/v1/meeting/"
 	deleteMeetingByIDPath         = "/v1/meeting/"
 	modifyMeetingByIDPath         = "/v1/meeting/"
@@ -46,8 +46,8 @@ func DeleteFilteredMeetingURL(ID, filter string) string {
 	return protocol + host + deleteFilteredMeetingPath + ID + "/meetings?Filter=" + filter
 }
 
-func ListAllUsersURL() string {
-	return protocol + host + listAllUsersPath
+func QueryAccountAllURL() string {
+	return protocol + host + QueryAccountAllPath
 }
 
 func GetMeetingByIDURL(ID string) string{

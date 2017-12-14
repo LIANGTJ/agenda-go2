@@ -22,12 +22,12 @@ func NeededFilePath() []string {
 
 func WorkingDir() string {
     // location , existed := os.LookupEnv("HOME")
-    var location string
-    var existed = false
-    if !existed {
-        location = "."
-    }
-    workDir := location + "/cli/agenda.d"
+
+    // if !existed {
+    //     location = "."
+    // }
+    location := "."
+    workDir := location + "/agenda.d"
     return workDir
 }
 

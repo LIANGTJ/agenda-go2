@@ -17,7 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"log"
+	// "log"
 	"agendaHttp"
 	// "net/http"
 	// "io/ioutil"
@@ -25,7 +25,7 @@ import (
 	// "os"
 	// "encoding/json"
 	// log "util/logger"
-	"entity"
+	// "entity"
 	// "status"
 )
 
@@ -38,7 +38,7 @@ var registerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("Error[registerd]： %v\n", err)
+				fmt.Printf("Error[registerd]： %v\n", err)
 			}
 		}()
 
@@ -52,16 +52,14 @@ var registerCmd = &cobra.Command{
 		// if user.Invalid() {
 		// 	panic("[error]: user regiestered invalid")
 		// }
-		decoder, err := agendaHttp.Register(username, password, email, phone)
+		user, err := agendaHttp.Register(username, password, email, phone)
 		if err != nil {
 			panic(err)
 		}
 		
-		if decoder != nil {
-			var user entity.User
-			decoder.Decode(&user)
-			fmt.Println("register successfully", user.Username)
-		}
+		
+		fmt.Println("register successfully", user.Username)
+		
 
 
 		
