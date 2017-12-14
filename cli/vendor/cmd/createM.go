@@ -15,15 +15,16 @@
 package cmd
 
 import (
-	"agenda"
+	"agendaHttp"
 	"fmt"
+	"status"
 	"github.com/spf13/cobra"
 	"time"
 )
 
 // addCmd represents the create Meeting command
-var addCmd = &cobra.Command{
-	Use:   "add",
+var createMCmd = &cobra.Command{
+	Use:   "createM",
 	Short: "create Meeting for further use",
 	Long: `create Meeting for further use and u need to input username, password.
 	it will be better if email and phone is provider`,
@@ -33,39 +34,44 @@ var addCmd = &cobra.Command{
 				fmt.Printf("Error[create Meeting]： %v\n", err)
 			}
 		}()
-
+		
 		fmt.Println("create Meeting called")
 
 		startTimeFlag, _ := cmd.Flags().GetString("startTime")
 		endTimeFlag, _ := cmd.Flags().GetString("endTime")
 		participatorsFlag, _ := cmd.Flags().GetStringSlice("participator")
 		titleFlag, _ := cmd.Flags().GetString("title")
-		// fmt.Printf("start: %v end: %v\n", startTimeFlag, endTimeFlag)
+
 		startTime, _ := time.Parse("2006-01-02 15:04:05", startTimeFlag)
 		endTime, _ := time.Parse("2006-01-02 15:04:05", endTimeFlag)
-
-		fmt.Printf("start: %v end: %v\n", startTime, endTime)
-
-		participators := make([]agenda.Username, 0, len(participatorsFlag))
-		participators = append(participators, agenda.LoginedUser().Name)
+		participators := make([]string, 0, 0)
+		participators = append(participators, status.LoginedUser())
 		for _, participator := range participatorsFlag {
-			participators = append(participators, agenda.Username(participator))
+			participators = append(participators, participator)
 		}
-		meetingInfo := agenda.MakeMeetingInfo(agenda.MeetingTitle(titleFlag),
-			agenda.LoginedUser().Name, participators,
-			startTime, endTime)
 
-		if _, err := agenda.SponsorMeeting(meetingInfo); err != nil {
+
+		_, err := agendaHttp.CreateMeeting(titleFlag, participators, startTime, endTime)
+		if err != nil {
 			panic(err)
+		} else {
+			fmt.Println("sucessfully create meeting")
 		}
-		// agenda.SaveAll()
-		fmt.Print("sucessfully create meeting\n")
+		// meetingInfo := agenda.MakeMeetingInfo(agenda.MeetingTitle(titleFlag),
+		// 	agenda.LoginedUser().Name, participators,
+		// 	startTime, endTime)
+
+		// if _, err := agenda.SponsorMeeting(meetingInfo); err != nil {
+		// 	panic(err)
+		// }
+		// // agenda.SaveAll()
+		// fmt.Print("sucessfully create meeting\n")
 
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(addCmd)
+	RootCmd.AddCommand(createMCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -77,9 +83,9 @@ func init() {
 	// is called directly, e.g.:
 	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	addCmd.Flags().StringP("startTime", "s", "", "create Meeting info for startTime")
-	addCmd.Flags().StringP("endTime", "e", "", "create Meeting info for endTime")
-	addCmd.Flags().StringP("participator", "p", "", "create Meeting info for participator")
-	addCmd.Flags().StringP("title", "t", "", "create Meeting info for title")
+	createMCmd.Flags().StringP("startTime", "s", "", "create Meeting info for startTime")
+	createMCmd.Flags().StringP("endTime", "e", "", "create Meeting info for endTime")
+	createMCmd.Flags().StringP("participator", "p", "", "create Meeting info for participator")
+	createMCmd.Flags().StringP("title", "t", "", "create Meeting info for title")
 
 }

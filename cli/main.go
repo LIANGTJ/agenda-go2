@@ -1,23 +1,20 @@
 package main
 
 import (
-	"agenda"
 	"os"
 	log "util/logger"
-
-	cmd "github.com/Binly42/agenda-go/cmd"
+	"cmd"
+	"model"
 )
 
-// var logln = util.Log
-// var logf = util.Logf
+
 
 func init() {
 }
 
 func main() {
-	agenda.LoadAll()
-	defer agenda.SaveAll()
-
+	defer model.SaveAll()
+	model.LoadAll()
 	if err := cmd.RootCmd.Execute(); err != nil {
 		log.Println(err)
 		os.Exit(1) // FIXME:

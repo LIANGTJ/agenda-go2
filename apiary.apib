@@ -11,19 +11,20 @@ Agenda is a simple API allowing consumers to schedule meeting on-line.
 
 ## User (object)
 
-+ identifier (string)
-+ password (string)
-+ email (string)
-+ phone (string)
++ Identifier (string)
++ Username
++ Password (string)
++ Email (string)
++ Phone (string)
 
 
 ## Meeting (object)
 
-+ identifier (string)
-+ sponsor (Username)
-+ participator (array[Username])
-+ starttime (string)
-+ endtime (string)
++ Identifier (string)
++ Sponsor (Username)
++ Participator (array[Username])
++ Starttime (string)
++ Endtime (string)
 
 
 
@@ -41,8 +42,8 @@ Login for a new session, in general as a registered user.
         
     + Attributes
     
-            + identifier: `zhang3` (string, required)
-            + password: `abc123` (string, required)
+        + Username: `zhang3` (string, required)
+        + Password: `abc123` (string, required)
         
 
 + Response 200 (application/json)
@@ -77,11 +78,11 @@ Logout for a session, in general as a registered user.
 
 Resource operations related to a user in the API.
 
-## User-Key [/v1/user/getkey{?username,password}]
+## User-Key [/v1/user/getkey{?Username,Password}]
 
 + Parameters
-    - username : `root` (string, required) - User Name
-    - password : `pass` (required)
+    - Username : `root` (string, required) - User Name
+    - Password : `pass` (required)
 
 ### Get User Key [GET]
 
@@ -106,10 +107,10 @@ get a security key for operations later
             }
 
 
-## User [/v1/user/{identifier}]
+## User [/v1/user/{Identifier}]
 
 + Parameters
-    - identifier : `1` (string, required) - User Identifier
+    - Identifier : `1` (string, required) - User Identifier
 
 ### Get User by ID [GET]
 + Request
@@ -122,10 +123,10 @@ get a security key for operations later
 + Response 200 (application/json)
 
         {
-            "id" : 1,
-            "username":"zhang3",
-            "password":"zhang",
-            "email":"zhang3@mail2.sysu.edu.cn"
+            "Id" : 1,
+            "Username":"zhang3",
+            "Password":"zhang",
+            "Email":"zhang3@mail2.sysu.edu.cn"
         }
 
 ### Delete User by ID [DELETE]
@@ -139,11 +140,11 @@ get a security key for operations later
 + Response 204
 
 
-## User's Meetings [/v1/user/{identifier}/meetings{?filter}]
+## User's Meetings [/v1/user/{Identifier}/meetings{?Filter}]
 
 + Parameters
-    - identifier : `1` (string, required) - User Identifier
-    - filter : `sponsored` (string, optional) - filtership between the requested Meetings and the User
+    - Identifier : `1` (string, required) - User Identifier
+    - Filter : `sponsored` (string, optional) - filtership between the requested Meetings and the User
         - Default : `all`
         - Members
             - `all`
@@ -169,13 +170,13 @@ List the Meetings matching the `filter` for the User.
 
             [
                 {
-                    "title":"iso900",
-                    "participators": [
+                    "Title":"iso900",
+                    "Participators": [
                         "zhang3",
                         "somebody",
                     ],
-                    "start-time":"2015-08-05T08:40:51.620Z",
-                    "end-time":"2015-10-05T08:40:51.620Z",
+                    "Start-time":"2015-08-05T08:40:51.620Z",
+                    "End-time":"2015-10-05T08:40:51.620Z",
                 }
             ]
 
@@ -212,17 +213,20 @@ Resources related to a users in the API.
     + Body
 
             [
-                {
-                    "id":1,
-                    "username":"zhang3",
-                    "password":"zhang",
-                    "email":"zhang3@mail2.sysu.edu.cn",
-                },{
-                    "id":2,
-                    "username":"li4",
-                    "password":"li",
-                    "email":"li4@mail2.sysu.edu.cn",
-                }
+              {
+                "Id": "1",
+                "Username": "zhang3",
+                "Password": "zhang",
+                "Email": "zhang3@mail2.sysu.edu.cn",
+                "Phone": "12345678"
+              },
+              {
+                "Id": "2",
+                "Username": "li4",
+                "Password": "li",
+                "Email": "li4@mail2.sysu.edu.cn",
+                "Phone": "18520280295"
+              }
             ]
 
 ### Register, Create a New User [POST]
@@ -231,8 +235,8 @@ Resources related to a users in the API.
 
 
     + Attributes
-            + username (string, required)
-            + password (string, required)
+            + Username (string, required)
+            + Password (string, required)
 
     + Headers
         
@@ -240,9 +244,9 @@ Resources related to a users in the API.
     + Body
 
             {
-                "username":"zhang3",
-                "password":"zhang",
-                "email":"zhang3@mail2.sysu.edu.cn"
+                "Username":"zhang3",
+                "Password":"zhang",
+                "Email":"zhang3@mail2.sysu.edu.cn"
             }
 
 + Response 201 (application/json)
@@ -257,20 +261,20 @@ Resources related to a users in the API.
     + Body
 
             {
-                "id": 1,
-                "username":"zhang3",
-                "password":"zhang",
-                "email":"zhang3@mail2.sysu.edu.cn"
+                "Id": 1,
+                "Username":"zhang3",
+                "Password":"zhang",
+                "Email":"zhang3@mail2.sysu.edu.cn"
             }
 
 
 
 # Group Meeting
 
-## Meeting [/v1/meeting/{identifier}]
+## Meeting [/v1/meeting/{Identifier}]
 
 + Parameters
-    - identifier : `1` (string, required) - Meeting Identifier
+    - Identifier : `1` (string, required) - Meeting Identifier
 
 ### Get Meeting by ID [GET]
 
@@ -284,13 +288,13 @@ Resources related to a users in the API.
     
 
             {
-                "title":"iso900",
-                "participators": [
+                "Title":"iso900",
+                "Participators": [
                     "zhang3",
                     "somebody",
                 ],
-                "start-time":"2015-08-05T08:40:51.620Z",
-                "end-time":"2015-10-05T08:40:51.620Z",
+                "Start-time":"2015-08-05T08:40:51.620Z",
+                "End-time":"2015-10-05T08:40:51.620Z",
             }
 
 ### Delete Meeting by ID [DELETE]
@@ -318,7 +322,7 @@ Resources related to a users in the API.
     
             {
                 "op": "remove",
-                "from": "/participators",
+                "from": "/Participators",
                 "value": "somebody",
             }
 
@@ -350,15 +354,18 @@ Resources related to a users in the API.
 
             [
                 {
-                    "title":"iso900",
-                    "participators": [
+                    "Title":"iso900",
+                    "Participators": [
                         "zhang3",
                         "somebody",
                     ],
-                    "start-time":"2015-08-05T08:40:51.620Z",
-                    "end-time":"2015-10-05T08:40:51.620Z",
+                    "Start-time":"2015-08-05T08:40:51.620Z",
+                    "End-time":"2015-10-05T08:40:51.620Z",
                 }
             ]
+## Meetings  [/v1/meetings]
+
+create a meeting
 
 ### Create(Sponsor) a New Meeting [POST]
 
@@ -370,13 +377,13 @@ Resources related to a users in the API.
     + Body
 
             {
-                "title":"iso900",
-                "participators": [
+                "Title":"iso900",
+                "Participators": [
                     "zhang3",
                     "somebody",
                 ],
-                "start-time":"2015-08-05T08:40:51.620Z",
-                "end-time":"2015-10-05T08:40:51.620Z",
+                "Start-time":"2015-08-05T08:40:51.620Z",
+                "End-time":"2015-10-05T08:40:51.620Z",
             }
 
 + Response 201 (application/json)
@@ -389,11 +396,11 @@ Resources related to a users in the API.
     + Body
 
             {
-                "title":"iso900",
-                "participators": [
+                "Title":"iso900",
+                "Participators": [
                     "zhang3",
                     "somebody",
                 ],
-                "start-time":"2015-08-05T08:40:51.620Z",
-                "end-time":"2015-10-05T08:40:51.620Z",
+                "Start-time":"2015-08-05T08:40:51.620Z",
+                "End-time":"2015-10-05T08:40:51.620Z",
             }
