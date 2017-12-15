@@ -106,9 +106,8 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Meth
 
 	var uInfoRaw UserInfo
 	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		res := ResponseJSON{Error: "wrong format for elements POST-ed"}
-		json.NewEncoder(w).Encode(res)
+		// NOTE: maybe should not expose `err` ?
+		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements POST-ed")
 		return
 	}
 
@@ -118,27 +117,14 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Meth
 		uInfoRaw.Mail,
 		uInfoRaw.Phone,
 	)
-	switch err := RegisterUser(uInfo); err {
-	case nil:
-		w.WriteHeader(http.StatusCreated)
-		res := ResponseJSON{Content: uInfo}
-		json.NewEncoder(w).Encode(res)
-		model.UserInfoService.Create(&uInfo)
-		return
-	case errors.ErrInvalidUsername:
-		w.WriteHeader(http.StatusBadRequest)
-		res := ResponseJSON{Error: err.Error()}
-		json.NewEncoder(w).Encode(res)
-		return
-	case errors.ErrExistedUser:
-		w.WriteHeader(http.StatusConflict)
-		res := ResponseJSON{Error: err.Error()}
-		json.NewEncoder(w).Encode(res)
-		return
-	default:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := RegisterUser(uInfo); err != nil {
+		RespondError(w, err)
 		return
 	}
+
+	w.WriteHeader(http.StatusCreated)
+	res := ResponseJSON{Content: uInfo}
+	json.NewEncoder(w).Encode(res)
 }
 var getMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
@@ -149,6 +135,44 @@ var modifyMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { //
 var getMeetingByIntervalHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
 var sponsorMeetingHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+}
+
+type HTTPStatusCode = int
+
+// ErrorOrCode can only hold `error` or `HTTPStatusCode` type
+type ErrorOrCode = interface{}
+
+var ErrInvalidMethod = errors.New("invalid request method")
+
+var StatusCodeCorrespondingToAgendaError = map[error]HTTPStatusCode{
+	errors.ErrInvalidUsername: http.StatusBadRequest,
+	errors.ErrExistedUser:     http.StatusConflict,
+	ErrInvalidMethod:          http.StatusBadRequest,
+}
+
+func RespondError(w http.ResponseWriter, err ErrorOrCode, msg ...string) {
+	errString := strings.Join(msg, "\n")
+	errCode := http.StatusInternalServerError
+
+	switch e := err.(type) {
+	case error:
+		errString = e.Error() + "\n\n" + errString
+		code, ok := StatusCodeCorrespondingToAgendaError[e]
+		if ok {
+			errCode = code
+		}
+	case HTTPStatusCode:
+		errCode = e
+	default:
+		log.Panicf("type `ErrorOrCode` expects `error` or `HTTPStatusCode`, but not %T", e)
+	}
+
+	// NOTE: seems that only using `http.Error` to handle simple error is enough ...
+	// w.WriteHeader(code)
+	// res := ResponseJSON{Error: errString}
+	// json.NewEncoder(w).Encode(res)
+
+	http.Error(w, errString, errCode)
 }
 
 type HTTPMethod = string
@@ -165,11 +189,7 @@ func HandlerMapper(mapping HandlerMap) http.HandlerFunc {
 		if ok {
 			handler(w, r)
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
-			res := ResponseJSON{
-				Error: fmt.Sprintf("wrong request method: %v, however, wanted: %v", r.Method, wantedMethods),
-			}
-			json.NewEncoder(w).Encode(res)
+			RespondError(w, ErrInvalidMethod, fmt.Sprintf("used method: %v, however, wanted: %v", r.Method, wantedMethods))
 			return
 		}
 	}
@@ -180,44 +200,30 @@ func init() {
 	api := "/v1"
 
 	// Group Session
-
-	// mux.HandleFunc(api+"/session", logInHandler) // Method: "POST"
-	// mux.HandleFunc(api+"/session", logOutHandler) // Method: "DELETE"
 	mux.HandleFunc(api+"/session", HandlerMapper(HandlerMap{
 		"POST":   logInHandler,
 		"DELETE": logOutHandler,
 	}))
 
 	// Group User
+	mux.HandleFunc(api+"/user/getkey", getUserKeyHandler) // Method: "GET" TODEL:
 
-	mux.HandleFunc(api+"/user/getkey", getUserKeyHandler) // Method: "GET"
-
-	// mux.HandleFunc(api+"/user/{identifier}", getUserByIDHandler)    // Method: "GET"
-	// mux.HandleFunc(api+"/user/{identifier}", deleteUserByIDHandler) // Method: "DELETE"
 	mux.HandleFunc(api+"/user/{identifier}", HandlerMapper(HandlerMap{
 		"GET":    getUserByIDHandler,
 		"DELETE": deleteUserByIDHandler,
 	}))
-
-	// mux.HandleFunc(api+"/user/{identifier}/meetings", getMeetingsForUserHandler) // Method: "GET"
-	// mux.HandleFunc(api+"/user/{identifier}/meetings", deleteMeetingsForUserHandler) // Method: "DELETE"
 	mux.HandleFunc(api+"/user/{identifier}/meetings", HandlerMapper(HandlerMap{
 		"GET":    getMeetingsForUserHandler,
 		"DELETE": deleteMeetingsForUserHandler,
 	}))
 
 	// Group Users
-	// mux.HandleFunc(api+"/users", getUsersHandler)     // Method: "GET"
-	// mux.HandleFunc(api+"/users", registerUserHandler) // Method: "POST"
 	mux.HandleFunc(api+"/users", HandlerMapper(HandlerMap{
 		"GET":  getUsersHandler,
 		"POST": registerUserHandler,
 	}))
 
 	// Group Meeting
-	// mux.HandleFunc(api+"/meetings/{identifier}", getMeetingByIDHandler) // Method: "GET"
-	// mux.HandleFunc(api+"/meetings/{identifier}", deleteMeetingByIDHandler) // Method: "DELETE"
-	// mux.HandleFunc(api+"/meetings/{identifier}", modifyMeetingByIDHandler) // Method: "PATCH"
 	mux.HandleFunc(api+"/meetings/{identifier}", HandlerMapper(HandlerMap{
 		"GET":    getMeetingByIDHandler,
 		"DELETE": deleteMeetingByIDHandler,
@@ -225,8 +231,6 @@ func init() {
 	}))
 
 	// Group Meetings
-	// mux.HandleFunc(api+"/meetings", getMeetingByIntervalHandler) // Method: "GET"
-	// mux.HandleFunc(api+"/meetings", sponsorMeetingHandler)       // Method: "POST"
 	mux.HandleFunc(api+"/meetings", HandlerMapper(HandlerMap{
 		"GET":  getMeetingByIntervalHandler,
 		"POST": sponsorMeetingHandler,
@@ -260,21 +264,12 @@ func RegisterUser(uInfo entity.UserInfo) error {
 	}
 
 	u := entity.NewUser(uInfo)
-	err := entity.GetAllUsersRegistered().Add(u)
-	return err
-}
-
-/*
-func RegisterUser(uInfo UserInfo) error {
-	if !uInfo.Name.Valid() {
-		return errors.ErrInvalidUsername
+	if err := model.UserInfoService.Create(&uInfo); err != nil {
+		log.Error(err) // TODO: should not be like this
 	}
-
-	u := entity.NewUser(uInfo)
 	err := entity.GetAllUsersRegistered().Add(u)
 	return err
 }
-*/
 
 func LogIn(name Username, auth Auth) error {
 	u := name.RefInAllUsers()
