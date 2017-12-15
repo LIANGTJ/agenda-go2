@@ -1,6 +1,8 @@
 package agenda
 
 import (
+	"agenda/mux"
+	"agenda/server"
 	"bytes"
 	errors "convention/agendaerror"
 	"encoding/json"
@@ -17,15 +19,22 @@ import (
 type Username = entity.Username
 type Auth = entity.Auth
 
-type UserInfo = entity.UserInfo
+// type UserInfo = entity.UserInfo // @@binly:
+type UserInfo struct {
+	Name  string `json:"username"`
+	Auth  string `json:"password"`
+	Mail  string `json:"mail"`
+	Phone string `json:"phone"`
+}
+
 type UserInfoPublic = entity.UserInfoPublic
 type User = entity.User
 type MeetingInfo = entity.MeetingInfo
 type Meeting = entity.Meeting
 type MeetingTitle = entity.MeetingTitle
 
-func MakeUserInfo(username Username, password Auth, email, phone string) UserInfo {
-	info := UserInfo{}
+func MakeUserInfo(username Username, password Auth, email, phone string) entity.UserInfo {
+	info := entity.UserInfo{}
 
 	info.Name = username
 	info.Auth = password
@@ -34,8 +43,8 @@ func MakeUserInfo(username Username, password Auth, email, phone string) UserInf
 
 	return info
 }
-func MakeMeetingInfo(title MeetingTitle, sponsor Username, participators []Username, startTime, endTime time.Time) MeetingInfo {
-	info := MeetingInfo{}
+func MakeMeetingInfo(title MeetingTitle, sponsor Username, participators []Username, startTime, endTime time.Time) entity.MeetingInfo {
+	info := entity.MeetingInfo{}
 
 	info.Title = title
 	info.Sponsor = sponsor.RefInAllUsers()
@@ -65,18 +74,133 @@ const (
 
 var (
 	agenda struct {
-		*Server
+		*server.Server
 	}
 )
 
+var logInHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+}
+var logOutHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
+}
+var getUserKeyHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+var getUserByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+var deleteUserByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
+}
+var getMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+var deleteMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
+}
+var getUsersHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+
+type ResponseJSON struct {
+	Error   string      `json:"error"`
+	Content interface{} `json:"content"`
+}
+
+var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+		res := ResponseJSON{Error: fmt.Sprintf("wrong request method: %v, wanted: %v", r.Method, "POST")}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	/*
+	   r.ParseForm()
+	   for _, v := range r.Form {
+	       if len(v) != 1 {
+	           w.WriteHeader(http.StatusBadRequest)
+	           res := ResponseJSON{Error: "wrong length for elements in POST.Form"}
+	           json.NewEncoder(w).Encode(res)
+	           return
+	       }
+	   }
+	*/
+
+	var uInfoRaw UserInfo
+	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		res := ResponseJSON{Error: "wrong format for elements POST-ed"}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	uInfo := MakeUserInfo(
+		Username(uInfoRaw.Name),
+		Auth(uInfoRaw.Auth),
+		uInfoRaw.Mail,
+		uInfoRaw.Phone,
+	)
+	switch err := RegisterUser(uInfo); err {
+	case nil:
+		w.WriteHeader(http.StatusCreated)
+		res := ResponseJSON{Content: uInfo}
+		json.NewEncoder(w).Encode(res)
+		return
+	case errors.ErrInvalidUsername:
+		w.WriteHeader(http.StatusBadRequest)
+		res := ResponseJSON{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	case errors.ErrExistedUser:
+		w.WriteHeader(http.StatusConflict)
+		res := ResponseJSON{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+var getMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+var deleteMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
+}
+var modifyMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "PATCH"
+}
+var getMeetingByIntervalHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+}
+var sponsorMeetingHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+}
+
 func init() {
-	mux := NewServeMux()
+	mux := mux.NewServeMux()
+	api := "/v1"
+
+	// Group Session
+	mux.HandleFunc(api+"/session", logInHandler) // Method: "POST"
+	// mux.HandleFunc(api+"/session", logOutHandler) // Method: "DELETE"
+
+	// Group User
+	mux.HandleFunc(api+"/user/getkey", getUserKeyHandler)        // Method: "GET"
+	mux.HandleFunc(api+"/user/{identifier}", getUserByIDHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/user/{identifier}", deleteUserByIDHandler)                 // Method: "DELETE"
+	mux.HandleFunc(api+"/user/{identifier}/meetings", getMeetingsForUserHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/user/{identifier}/meetings", deleteMeetingsForUserHandler) // Method: "DELETE"
+
+	// Group Users
+	// mux.HandleFunc(api+"/users", getUsersHandler)     // Method: "GET"
+	mux.HandleFunc(api+"/users", registerUserHandler) // Method: "POST"
+
+	// Group Meeting
+	mux.HandleFunc(api+"/meetings/{identifier}", getMeetingByIDHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/meetings/{identifier}", deleteMeetingByIDHandler) // Method: "DELETE"
+	// mux.HandleFunc(api+"/meetings/{identifier}", modifyMeetingByIDHandler) // Method: "PATCH"
+
+	// Group Meetings
+	mux.HandleFunc(api+"/meetings", getMeetingByIntervalHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/meetings", sponsorMeetingHandler)       // Method: "POST"
+
+	// ...
 	mux.HandleFunc("/api/test", apiTestHandler())
 	mux.HandleFunc("/unknown/", sayDeveloping)
 	mux.HandleFunc("/say/", sayhelloName)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./asset/"))))
 
-	srv := NewServer()
+	srv := server.NewServer()
 	srv.SetHandler(mux)
 
 	agenda.Server = srv
@@ -92,6 +216,17 @@ func Listen(addr string) error {
 // NOTE: Now, assume the operations' actor are always the `Current User`
 
 // RegisterUser ...
+func RegisterUser(uInfo entity.UserInfo) error {
+	if !uInfo.Name.Valid() {
+		return errors.ErrInvalidUsername
+	}
+
+	u := entity.NewUser(uInfo)
+	err := entity.GetAllUsersRegistered().Add(u)
+	return err
+}
+
+/*
 func RegisterUser(uInfo UserInfo) error {
 	if !uInfo.Name.Valid() {
 		return errors.ErrInvalidUsername
@@ -101,6 +236,7 @@ func RegisterUser(uInfo UserInfo) error {
 	err := entity.GetAllUsersRegistered().Add(u)
 	return err
 }
+*/
 
 func LogIn(name Username, auth Auth) error {
 	u := name.RefInAllUsers()

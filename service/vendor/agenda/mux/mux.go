@@ -1,4 +1,4 @@
-package agenda
+package mux
 
 import "net/http"
 
