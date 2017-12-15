@@ -4,6 +4,11 @@ go:
     - 1.9
     - master
 
+script:
+  - go build ./service/main.go
+  - go build ./cli/main.go
+  - go test ./service/vendor/...
+  - go test ./cli/vendor/...
 
 notifications:
   email:
