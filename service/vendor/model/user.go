@@ -67,20 +67,19 @@ func (*UserInfoAtomicService) Delete(u *entity.UserInfoSerializable) error {
 }
 
 // FindAll .
-func (*UserInfoAtomicService) FindAll() []entity.UserInfoSerializable {
+func (*UserInfoAtomicService) FindAll() ([]entity.UserInfoSerializable, error) {
 	var rows []entity.UserInfoSerializable
-	agendaDB.Find(&rows) // CHECK: should check .Error ?
-	return rows
+	err := agendaDB.Find(&rows).Error
+	return rows, err
 }
 
 // FindByUsername .
-func (*UserInfoAtomicService) FindByUsername(name entity.Username) *entity.UserInfoSerializable {
+func (*UserInfoAtomicService) FindByUsername(name entity.Username) (entity.UserInfoSerializable, error) {
 	var uInfo entity.UserInfoSerializable
 
 	// agendaDB.First(&uInfo, entity.UserInfoSerializable{Name: name}) // TODEL: sad to anonymous member ...
 	u := entity.UserInfoSerializable{}
 	u.Name = name
-	agendaDB.First(&uInfo, u)
-
-	return &uInfo
+	err := agendaDB.First(&uInfo, u).Error
+	return uInfo, err
 }
