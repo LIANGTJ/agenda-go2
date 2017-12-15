@@ -30,7 +30,7 @@ func (name Username) String() string {
 }
 
 type UserInfoPublic struct {
-	Name Username
+	Name Username `gorm:"primary_key"`
 
 	Mail  string
 	Phone string
@@ -42,7 +42,7 @@ type Auth = auth.Auth
 type UserInfo struct {
 	UserInfoPublic
 
-	Auth Auth
+	Auth Auth `gorm:"not NULL"`
 }
 
 // UserInfoSerializable represents serializable UserInfo

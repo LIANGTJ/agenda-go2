@@ -108,18 +108,6 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Meth
 		return
 	}
 
-	/*
-	   r.ParseForm()
-	   for _, v := range r.Form {
-	       if len(v) != 1 {
-	           w.WriteHeader(http.StatusBadRequest)
-	           res := ResponseJSON{Error: "wrong length for elements in POST.Form"}
-	           json.NewEncoder(w).Encode(res)
-	           return
-	       }
-	   }
-	*/
-
 	var uInfoRaw UserInfo
 	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -139,6 +127,7 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Meth
 		w.WriteHeader(http.StatusCreated)
 		res := ResponseJSON{Content: uInfo}
 		json.NewEncoder(w).Encode(res)
+		model.UserInfoService.Create(&uInfo)
 		return
 	case errors.ErrInvalidUsername:
 		w.WriteHeader(http.StatusBadRequest)
