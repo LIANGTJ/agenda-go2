@@ -115,23 +115,3 @@ func Panicln(v ...interface{}) {
 	log.Output(2, s)
 	panic(s)
 }
-
-// var (
-// 	Print   = log.Print
-// 	Printf  = log.Printf
-// 	Println = log.Println
-// 	Fatal   = log.Fatal
-// 	Fatalf  = log.Fatalf
-// 	Fatalln = log.Fatalln
-// 	Panic   = log.Panic
-// 	Panicf  = log.Panicf
-// 	Panicln = log.Panicln
-
-// 	// TODO:
-// 	Warning   = log.Print
-// 	Warningf  = log.Printf
-// 	Warningln = log.Println
-// 	Error     = log.Print
-// 	Errorf    = log.Printf
-// 	Errorln   = log.Println
-// )

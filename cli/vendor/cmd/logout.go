@@ -17,8 +17,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-
-	"agenda"
+	// "log"
+	"agendaHttp"
 )
 
 // logoutCmd represents the logout command
@@ -36,15 +36,10 @@ var logoutCmd = &cobra.Command{
 
 		fmt.Println("logout called")
 
-		// fmt.Println("logout called by " + username)
-		// fmt.Println("logout with info password: " + password)
-
-		if err := agenda.LogOut(agenda.LoginedUser().Name); err != nil {
+		if err := agendaHttp.Logout(); err != nil {
 			panic(err)
-		} else {
-			fmt.Print("logout sucessfully!\n")
-			// agenda.SaveAll()
-		}
+		} 
+		fmt.Println("logout sucessfully")
 	},
 }
 

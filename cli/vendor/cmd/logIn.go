@@ -17,8 +17,10 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-
-	"agenda"
+	"agendaHttp"
+	// "log"
+	"status"
+	
 )
 
 // loginCmd represents the login command
@@ -34,20 +36,26 @@ var loginCmd = &cobra.Command{
 			}
 		}()
 
-		fmt.Println("login called")
+		// fmt.Println("login called")
 
 		username, _ := cmd.Flags().GetString("username")
 		password, _ := cmd.Flags().GetString("password")
-
+		
+		
 		fmt.Println("login called by " + username)
 		fmt.Println("login with info password: " + password)
 
-		if err := agenda.LogIn(agenda.Username(username), agenda.Auth(password)); err != nil {
+		err := agendaHttp.Login(username, password)
+		if err != nil {
 			panic(err)
-		} else {
-			fmt.Print("login sucessfully!\n")
-			// agenda.SaveAll()
 		}
+		
+		fmt.Println("Login Sucessfully", status.LoginedUser())
+
+		
+
+
+		
 	},
 }
 
