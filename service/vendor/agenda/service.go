@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"util"
 	log "util/logger"
 )
 
@@ -101,12 +102,7 @@ type ResponseJSON struct {
 }
 
 var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusBadRequest)
-		res := ResponseJSON{Error: fmt.Sprintf("wrong request method: %v, wanted: %v", r.Method, "POST")}
-		json.NewEncoder(w).Encode(res)
-		return
-	}
+	util.PanicIf(r.Method != "POST")
 
 	var uInfoRaw UserInfo
 	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
@@ -155,33 +151,86 @@ var getMeetingByIntervalHandler = func(w http.ResponseWriter, r *http.Request) {
 var sponsorMeetingHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
 }
 
+type HTTPMethod = string
+type HandlerMap = map[HTTPMethod]http.HandlerFunc
+
+func HandlerMapper(mapping HandlerMap) http.HandlerFunc {
+	wantedMethods := ""
+	for m := range mapping {
+		wantedMethods += "/" + m
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		handler, ok := mapping[r.Method]
+		if ok {
+			handler(w, r)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			res := ResponseJSON{
+				Error: fmt.Sprintf("wrong request method: %v, however, wanted: %v", r.Method, wantedMethods),
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+	}
+}
+
 func init() {
 	mux := mux.NewServeMux()
 	api := "/v1"
 
 	// Group Session
-	mux.HandleFunc(api+"/session", logInHandler) // Method: "POST"
+
+	// mux.HandleFunc(api+"/session", logInHandler) // Method: "POST"
 	// mux.HandleFunc(api+"/session", logOutHandler) // Method: "DELETE"
+	mux.HandleFunc(api+"/session", HandlerMapper(HandlerMap{
+		"POST":   logInHandler,
+		"DELETE": logOutHandler,
+	}))
 
 	// Group User
-	mux.HandleFunc(api+"/user/getkey", getUserKeyHandler)        // Method: "GET"
-	mux.HandleFunc(api+"/user/{identifier}", getUserByIDHandler) // Method: "GET"
-	// mux.HandleFunc(api+"/user/{identifier}", deleteUserByIDHandler)                 // Method: "DELETE"
-	mux.HandleFunc(api+"/user/{identifier}/meetings", getMeetingsForUserHandler) // Method: "GET"
+
+	mux.HandleFunc(api+"/user/getkey", getUserKeyHandler) // Method: "GET"
+
+	// mux.HandleFunc(api+"/user/{identifier}", getUserByIDHandler)    // Method: "GET"
+	// mux.HandleFunc(api+"/user/{identifier}", deleteUserByIDHandler) // Method: "DELETE"
+	mux.HandleFunc(api+"/user/{identifier}", HandlerMapper(HandlerMap{
+		"GET":    getUserByIDHandler,
+		"DELETE": deleteUserByIDHandler,
+	}))
+
+	// mux.HandleFunc(api+"/user/{identifier}/meetings", getMeetingsForUserHandler) // Method: "GET"
 	// mux.HandleFunc(api+"/user/{identifier}/meetings", deleteMeetingsForUserHandler) // Method: "DELETE"
+	mux.HandleFunc(api+"/user/{identifier}/meetings", HandlerMapper(HandlerMap{
+		"GET":    getMeetingsForUserHandler,
+		"DELETE": deleteMeetingsForUserHandler,
+	}))
 
 	// Group Users
 	// mux.HandleFunc(api+"/users", getUsersHandler)     // Method: "GET"
-	mux.HandleFunc(api+"/users", registerUserHandler) // Method: "POST"
+	// mux.HandleFunc(api+"/users", registerUserHandler) // Method: "POST"
+	mux.HandleFunc(api+"/users", HandlerMapper(HandlerMap{
+		"GET":  getUsersHandler,
+		"POST": registerUserHandler,
+	}))
 
 	// Group Meeting
-	mux.HandleFunc(api+"/meetings/{identifier}", getMeetingByIDHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/meetings/{identifier}", getMeetingByIDHandler) // Method: "GET"
 	// mux.HandleFunc(api+"/meetings/{identifier}", deleteMeetingByIDHandler) // Method: "DELETE"
 	// mux.HandleFunc(api+"/meetings/{identifier}", modifyMeetingByIDHandler) // Method: "PATCH"
+	mux.HandleFunc(api+"/meetings/{identifier}", HandlerMapper(HandlerMap{
+		"GET":    getMeetingByIDHandler,
+		"DELETE": deleteMeetingByIDHandler,
+		"PATCH":  modifyMeetingByIDHandler,
+	}))
 
 	// Group Meetings
-	mux.HandleFunc(api+"/meetings", getMeetingByIntervalHandler) // Method: "GET"
+	// mux.HandleFunc(api+"/meetings", getMeetingByIntervalHandler) // Method: "GET"
 	// mux.HandleFunc(api+"/meetings", sponsorMeetingHandler)       // Method: "POST"
+	mux.HandleFunc(api+"/meetings", HandlerMapper(HandlerMap{
+		"GET":  getMeetingByIntervalHandler,
+		"POST": sponsorMeetingHandler,
+	}))
 
 	// ...
 	mux.HandleFunc("/api/test", apiTestHandler())

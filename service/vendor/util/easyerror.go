@@ -4,23 +4,31 @@ import (
 	log "util/logger"
 )
 
-func PanicIf(status interface{}) {
+func PanicIf(status interface{}, msg ...interface{}) {
 	switch v := status.(type) {
 	case error:
-		panic(v)
+		log.Panicln(v, msg)
+	case bool:
+		if v {
+			log.Panicf("... unknown panic: %v\n\t ... since %T:%v\n", msg, v, v)
+		}
 	default:
 		if v != nil {
-			log.Panicf("... unknown panic ... %T:%v\n", v, v)
+			log.Panicf("... unknown panic: %v\n\t ... since %T:%v\n", msg, v, v)
 		}
 	}
 }
-func WarnIf(status interface{}) {
+func WarnIf(status interface{}, msg ...interface{}) {
 	switch v := status.(type) {
 	case error:
-		log.Warningln(v)
+		log.Warningln(v, msg)
+	case bool:
+		if v {
+			log.Panicf("... unknown warning: %v\n\t ... since %T:%v\n", msg, v, v)
+		}
 	default:
 		if v != nil {
-			log.Panicf("... unknown warning ... %T:%v\n", v, v)
+			log.Panicf("... unknown warning: %v\n\t ... since %T:%v\n", msg, v, v)
 		}
 	}
 }
