@@ -1,4 +1,5 @@
 [![](https://travis-ci.org/LIANGTJ/agenda-go2.svg?branch=master)](https://travis-ci.org/LIANGTJ/agenda-go2)
+[![codecov](https://codecov.io/gh/LIANGTJ/agenda-go2/branch/master/graph/badge.svg)](https://codecov.io/gh/LIANGTJ/agenda-go2)
 ## 简介
 
  agenda是会议管理的命令行程序，由go语言实现。
