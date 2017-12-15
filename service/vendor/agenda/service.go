@@ -20,8 +20,8 @@ import (
 type Username = entity.Username
 type Auth = entity.Auth
 
-// type UserInfo = entity.UserInfo // @@binly:
-type UserInfo struct {
+// type UserInfo = entity.UserInfoRaw
+type UserInfoRaw struct {
 	Name  string `json:"username"`
 	Auth  string `json:"password"`
 	Mail  string `json:"mail"`
@@ -93,18 +93,18 @@ var getMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) { /
 }
 var deleteMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
 }
-var getUsersHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
+var getUsersHandler = func(w http.ResponseWriter, r *http.Request) {
+	util.PanicIf(r.Method != "GET")
+
+	uInfos := QueryAccountAll()
+	res := ResponseJSON{Content: uInfos}
+	RespondJSON(w, http.StatusOK, res)
 }
 
-type ResponseJSON struct {
-	Error   string      `json:"error"`
-	Content interface{} `json:"content"`
-}
-
-var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+var registerUserHandler = func(w http.ResponseWriter, r *http.Request) {
 	util.PanicIf(r.Method != "POST")
 
-	var uInfoRaw UserInfo
+	var uInfoRaw UserInfoRaw
 	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
 		// NOTE: maybe should not expose `err` ?
 		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements POST-ed")
@@ -122,9 +122,8 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) { // Meth
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
 	res := ResponseJSON{Content: uInfo}
-	json.NewEncoder(w).Encode(res)
+	RespondJSON(w, http.StatusCreated, res)
 }
 var getMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
@@ -173,6 +172,17 @@ func RespondError(w http.ResponseWriter, err ErrorOrCode, msg ...string) {
 	// json.NewEncoder(w).Encode(res)
 
 	http.Error(w, errString, errCode)
+}
+
+type ResponseJSON struct {
+	Error   string      `json:"error"`
+	Content interface{} `json:"content"`
+}
+
+func RespondJSON(w http.ResponseWriter, code HTTPStatusCode, res ResponseJSON) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(res)
 }
 
 type HTTPMethod = string
