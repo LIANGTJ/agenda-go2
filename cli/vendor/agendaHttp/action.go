@@ -218,7 +218,10 @@ func ErrorHandle(resp *http.Response) error {
 		// return errors.New(body.msg)
 		// var msg = make([]byte,0,0)
 		// io.ReadFull(res.Body,msg)
-		msg, _ := ioutil.ReadAll(resp.Body)
+		msg, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
 		return errors.New(string(msg))
 
 	}
