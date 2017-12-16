@@ -328,7 +328,18 @@ func Authorize(token entity.Token) (entity.SessionInfo, error) {
 		return entity.SessionInfo{}, ErrInvalidToken
 	}
 	sInfo, err := model.SessionInfoService.FindByToken(token)
-	// uInfo := entity.UserInfo(sInfo.User)
+	if err != nil {
+		return sInfo, err
+	}
+
+	sess := entity.Session{sInfo}
+	if !sess.Valid() {
+		if err := model.SessionInfoService.Delete(&sInfo); err != nil {
+			log.Errorf("Delete a bad session failed, error: %q\n", err.Error())
+		}
+		return entity.SessionInfo{}, ErrSessionExpired
+	}
+
 	return sInfo, err
 }
 func DeleteSession(sInfo *entity.SessionInfo) error {
@@ -345,6 +356,7 @@ func DeleteSession(sInfo *entity.SessionInfo) error {
 	return nil
 }
 
+// TODO: FIXME: limit the number of sessions a User can create
 func CreateSession(sInfo *entity.SessionInfo) error {
 	token := entity.TokenGen(32)
 	_, err := model.SessionInfoService.FindByToken(token)

@@ -87,39 +87,40 @@ var (
 )
 
 var logInHandler = func(w http.ResponseWriter, r *http.Request) {
-
 	util.PanicIf(r.Method != "POST")
 
 	var uInfoRaw UserInfoRaw
 	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
 		// NOTE: maybe should not expose `err` ?
-		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements POST-ed")
+		RespondErrorDecoding(w, err)
 		return
 	}
 
-	name, auth := Username(uInfoRaw.Name), Auth(uInfoRaw.Auth)
-	if uInfo, err := QueryAccountByUsername(name); err != nil {
+	name := Username(uInfoRaw.Name)
+	uInfo, err := QueryAccountByUsername(name)
+	if err != nil {
 		RespondError(w, err)
 		return
-	} else {
-		// LogIn(name, auth)
-		if !uInfo.Auth.Verify(auth) {
-			RespondError(w, errors.ErrFailedAuth)
-		} else {
-			expire := time.Now().AddDate(0, 0, 1)
-			// cookie := http.Cookie{"test", "tcookie", "/", "www.domain.com", expire, expire.Format(time.UnixDate), 86400, true, true, "test=tcookie", []string{"test=tcookie"}}
-			// http.SetCookie(w, &cookie)
+	}
 
-			sInfo := entity.SessionInfo{
-				ExpiredAt: expire,
-				User:      uInfo,
-			}
-			if err := CreateSession(&sInfo); err != nil {
-				RespondError(w, err)
-				return
-			}
-			RespondJSON(w, http.StatusOK, ResponseJSON{Content: sInfo.Token})
+	// LogIn(name, authTrial)
+	authTrial := Auth(uInfoRaw.Auth)
+	if !uInfo.Auth.Verify(authTrial) {
+		RespondError(w, errors.ErrFailedAuth)
+	} else {
+		expire := time.Now().Add(10 * time.Minute)
+		// cookie := http.Cookie{"test", "tcookie", "/", "www.domain.com", expire, expire.Format(time.UnixDate), 86400, true, true, "test=tcookie", []string{"test=tcookie"}}
+		// http.SetCookie(w, &cookie)
+
+		sInfo := entity.SessionInfo{
+			ExpiredAt: expire,
+			User:      uInfo,
 		}
+		if err := CreateSession(&sInfo); err != nil {
+			RespondError(w, err)
+			return
+		}
+		RespondJSON(w, http.StatusOK, ResponseToken{sInfo.Token})
 	}
 }
 var logOutHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -127,45 +128,37 @@ var logOutHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	var rInfo RequestJSON
 	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		RespondErrorDecoding(w, err)
 		return
 	}
 
-	// validate ...
 	sInfo, err := Authorize(rInfo.Token)
 	if err != nil {
 		RespondError(w, err)
 		return
 	}
 
-	// remove this token
 	if err := DeleteSession(&sInfo); err != nil {
 		RespondError(w, err)
 		return
 	}
 
 	// RespondJSON(w, http.StatusNoContent)
-	RespondError(w, http.StatusNoContent)
+	// RespondError(w, http.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }
 var getUserKeyHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
 var getUserByIDHandler = func(w http.ResponseWriter, r *http.Request) {
 	util.PanicIf(r.Method != "GET")
 
-	// print(r.URL.Path, "\n\n")
-	// print(r.URL.Query(), "\n\n")
-
-	// id := muxx.Vars(r)["identifier"]
-	// print("id: "+id, "\n")
-
-	// FIXME: TODEL: duplicate:
 	var rInfo RequestJSON
 	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		RespondErrorDecoding(w, err)
 		return
 	}
-	_, err := Authorize(rInfo.Token)
-	if err != nil {
+
+	if _, err := Authorize(rInfo.Token); err != nil {
 		RespondError(w, err)
 		return
 	}
@@ -179,8 +172,8 @@ var getUserByIDHandler = func(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, err)
 			return
 		}
-		// log.Printf("err: %+v; name: %+v; uInfo: %+v \n", err, name, uInfo)
-		res := ResponseJSON{Content: uInfo.UserInfoPublic}
+
+		res := ResponseUserInfoPublic(uInfo.UserInfoPublic)
 		RespondJSON(w, http.StatusOK, res)
 	}
 }
@@ -193,21 +186,27 @@ var deleteMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) 
 var getUsersHandler = func(w http.ResponseWriter, r *http.Request) {
 	util.PanicIf(r.Method != "GET")
 
-	// FIXME: TODEL: duplicate:
 	var rInfo RequestJSON
 	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		RespondErrorDecoding(w, err)
 		return
 	}
-	_, err := Authorize(rInfo.Token)
-	if err != nil {
+
+	if _, err := Authorize(rInfo.Token); err != nil {
 		RespondError(w, err)
 		return
 	}
 
-	uInfos := QueryAccountAll()
-	res := ResponseJSON{Content: uInfos}
-	RespondJSON(w, http.StatusOK, res)
+	// uInfos := QueryAccountAll()
+	if uInfos, err := model.UserInfoService.FindAll(); err != nil {
+		RespondError(w, err)
+	} else {
+		res := make([]entity.UserInfoPublic, 0, len(uInfos))
+		for _, u := range uInfos {
+			res = append(res, u.UserInfoPublic)
+		}
+		RespondJSON(w, http.StatusOK, res)
+	}
 }
 
 var registerUserHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -231,7 +230,7 @@ var registerUserHandler = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := ResponseJSON{Content: uInfo.UserInfoPublic}
+	res := ResponseUserInfoPublic(uInfo.UserInfoPublic)
 	RespondJSON(w, http.StatusCreated, res)
 }
 var getMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
@@ -243,81 +242,6 @@ var modifyMeetingByIDHandler = func(w http.ResponseWriter, r *http.Request) { //
 var getMeetingByIntervalHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
 var sponsorMeetingHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
-}
-
-type HTTPStatusCode = int
-
-// ErrorOrCode can only hold `error` or `HTTPStatusCode` type
-type ErrorOrCode = interface{}
-
-var ErrInvalidMethod = errors.New("invalid request method")
-var ErrInvalidToken = errors.New("invalid token")
-var ErrDeletedSession = errors.New("deleted session successfully")
-
-var StatusCodeCorrespondingToAgendaError = map[error]HTTPStatusCode{
-	errors.ErrInvalidUsername: http.StatusBadRequest,
-	errors.ErrExistedUser:     http.StatusConflict,
-	ErrInvalidMethod:          http.StatusBadRequest,
-	errors.ErrFailedAuth:      http.StatusUnauthorized,
-	ErrInvalidToken:           http.StatusUnauthorized,
-	ErrDeletedSession:         http.StatusNoContent,
-}
-
-func RespondError(w http.ResponseWriter, err ErrorOrCode, msg ...string) {
-	errString := strings.Join(msg, "\n")
-	errCode := http.StatusInternalServerError
-
-	switch e := err.(type) {
-	case error:
-		errString = e.Error() + "\n\n" + errString
-		code, ok := StatusCodeCorrespondingToAgendaError[e]
-		if ok {
-			errCode = code
-		}
-	case HTTPStatusCode:
-		errCode = e
-	default:
-		log.Panicf("type `ErrorOrCode` expects `error` or `HTTPStatusCode`, but not %T", e)
-	}
-
-	// NOTE: seems that only using `http.Error` to handle simple error is enough ...
-	// w.WriteHeader(code)
-	// res := ResponseJSON{Error: errString}
-	// json.NewEncoder(w).Encode(res)
-
-	http.Error(w, errString, errCode)
-}
-
-type ResponseJSON struct {
-	Error   string      `json:"error"`
-	Content interface{} `json:"content"`
-}
-
-func RespondJSON(w http.ResponseWriter, code HTTPStatusCode, res ResponseJSON) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(res)
-}
-
-type HTTPMethod = string
-type HandlerMap = map[HTTPMethod]http.HandlerFunc
-
-func HandlerMapper(mapping HandlerMap) http.HandlerFunc {
-	methods := make([]string, 0, len(mapping))
-	for m := range mapping {
-		methods = append(methods, m)
-	}
-	wantedMethods := strings.Join(methods, "/")
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		handler, ok := mapping[r.Method]
-		if ok {
-			handler(w, r)
-		} else {
-			RespondError(w, ErrInvalidMethod, fmt.Sprintf("used method: %v, however, wanted: %v", r.Method, wantedMethods))
-			return
-		}
-	}
 }
 
 func init() {
@@ -384,10 +308,6 @@ func Listen(addr string) error {
 	}
 	return agenda.Listen(addr)
 }
-
-// NOTE: Now, assume the operations' actor are always the `Current User`
-
-// ...
 
 // detail handlers, etc ... ----------------------------------------------------------------
 
