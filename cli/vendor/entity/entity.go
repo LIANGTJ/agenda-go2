@@ -8,19 +8,19 @@ import (
 
 type Meeting struct {
 
-	Title 			string
-	Participators 	[]string
-	StartTime 		time.Time
-	EndTime 		time.Time
+	Title 			string      `json:"title"`
+	Participators 	[]string	`json:"participators"`
+	StartTime 		time.Time	`json:"starttime"`
+	EndTime 		time.Time	`json:"endtime"`
 
 }
 
 type SerializedMeeting struct {
 	
-	Title 			string
-	Participators 	[]string
-	StartTime 		string
-	EndTime 		string
+	Title 			string		`json:"title"`
+	Participators 	[]string	`json:"participators"`
+	StartTime 		string		`json:"starttime"`
+	EndTime 		string		`json:"endtime"`
 	
 }
 
@@ -54,10 +54,10 @@ func (m *Meeting)Serialized() *SerializedMeeting{
 
 type User struct {
 	
-		Username string
-		Password string
-		Email 	 string
-		Phone 	 string
+		Username string	`json:"username"`
+		Password string	`json:"password"`
+		Email 	 string	`json:"email"`
+		Phone 	 string	`json:"phone"`
 	}
 	
 type UserList []User

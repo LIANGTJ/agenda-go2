@@ -2,16 +2,17 @@ package agendaHttp
 
 
 var(
-	protocol                      = "https://"
-	host                          = "private-12576-agenda32.apiary-mock.com"
-	registerPath                  = "/v1/users"
-	loginPath                     = "/v1/session"
+	protocol                      = "http://"
+	// host                          = "private-12576-agenda32.apiary-mock.com"
+	host						  = "127.0.0.1:8080"
+	registerPath                  = "/v1/users/"
+	loginPath                     = "/v1/sessions/"
 	logoutPath                    = "/v1/session"
 	getUserByIDPath               = "/v1/user/"
 	deleteUserByIDPath            = "/v1/user/"
 	listFilteredMeetingPath       = "/v1/user/"
 	deleteFilteredMeetingPath     = "/v1/user/"
-	QueryAccountAllPath              = "/v1/users"
+	QueryAccountAllPath           = "/v1/users/"
 	getMeetingByIDPath            = "/v1/meeting/"
 	deleteMeetingByIDPath         = "/v1/meeting/"
 	modifyMeetingByIDPath         = "/v1/meeting/"
