@@ -29,6 +29,12 @@ type UserInfoRaw struct {
 	Phone string `json:"phone"`
 }
 
+type RequestJSON struct {
+	Token entity.Token `json:"token"`
+	UserInfoRaw
+	// ...
+}
+
 type UserInfoPublic = entity.UserInfoPublic
 type User = entity.User
 type MeetingInfo = entity.MeetingInfo
@@ -80,9 +86,66 @@ var (
 	}
 )
 
-var logInHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "POST"
+var logInHandler = func(w http.ResponseWriter, r *http.Request) {
+
+	util.PanicIf(r.Method != "POST")
+
+	var uInfoRaw UserInfoRaw
+	if err := json.NewDecoder(r.Body).Decode(&uInfoRaw); err != nil {
+		// NOTE: maybe should not expose `err` ?
+		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements POST-ed")
+		return
+	}
+
+	name, auth := Username(uInfoRaw.Name), Auth(uInfoRaw.Auth)
+	if uInfo, err := QueryAccountByUsername(name); err != nil {
+		RespondError(w, err)
+		return
+	} else {
+		// LogIn(name, auth)
+		if !uInfo.Auth.Verify(auth) {
+			RespondError(w, errors.ErrFailedAuth)
+		} else {
+			expire := time.Now().AddDate(0, 0, 1)
+			// cookie := http.Cookie{"test", "tcookie", "/", "www.domain.com", expire, expire.Format(time.UnixDate), 86400, true, true, "test=tcookie", []string{"test=tcookie"}}
+			// http.SetCookie(w, &cookie)
+
+			sInfo := entity.SessionInfo{
+				ExpiredAt: expire,
+				User:      uInfo,
+			}
+			if err := CreateSession(&sInfo); err != nil {
+				RespondError(w, err)
+				return
+			}
+			RespondJSON(w, http.StatusOK, ResponseJSON{Content: sInfo.Token})
+		}
+	}
 }
-var logOutHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "DELETE"
+var logOutHandler = func(w http.ResponseWriter, r *http.Request) {
+	util.PanicIf(r.Method != "DELETE")
+
+	var rInfo RequestJSON
+	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		return
+	}
+
+	// validate ...
+	sInfo, err := Authorize(rInfo.Token)
+	if err != nil {
+		RespondError(w, err)
+		return
+	}
+
+	// remove this token
+	if err := DeleteSession(&sInfo); err != nil {
+		RespondError(w, err)
+		return
+	}
+
+	// RespondJSON(w, http.StatusNoContent)
+	RespondError(w, http.StatusNoContent)
 }
 var getUserKeyHandler = func(w http.ResponseWriter, r *http.Request) { // Method: "GET"
 }
@@ -94,6 +157,18 @@ var getUserByIDHandler = func(w http.ResponseWriter, r *http.Request) {
 
 	// id := muxx.Vars(r)["identifier"]
 	// print("id: "+id, "\n")
+
+	// FIXME: TODEL: duplicate:
+	var rInfo RequestJSON
+	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		return
+	}
+	_, err := Authorize(rInfo.Token)
+	if err != nil {
+		RespondError(w, err)
+		return
+	}
 
 	if us := muxx.Vars(r)["identifier"]; len(us) > 0 { // FIXME: used muxx
 		// if us := r.URL.Query()["username"]; len(us) > 0 {
@@ -117,6 +192,18 @@ var deleteMeetingsForUserHandler = func(w http.ResponseWriter, r *http.Request) 
 }
 var getUsersHandler = func(w http.ResponseWriter, r *http.Request) {
 	util.PanicIf(r.Method != "GET")
+
+	// FIXME: TODEL: duplicate:
+	var rInfo RequestJSON
+	if err := json.NewDecoder(r.Body).Decode(&rInfo); err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error(), "decode error for elements in request")
+		return
+	}
+	_, err := Authorize(rInfo.Token)
+	if err != nil {
+		RespondError(w, err)
+		return
+	}
 
 	uInfos := QueryAccountAll()
 	res := ResponseJSON{Content: uInfos}
@@ -164,11 +251,16 @@ type HTTPStatusCode = int
 type ErrorOrCode = interface{}
 
 var ErrInvalidMethod = errors.New("invalid request method")
+var ErrInvalidToken = errors.New("invalid token")
+var ErrDeletedSession = errors.New("deleted session successfully")
 
 var StatusCodeCorrespondingToAgendaError = map[error]HTTPStatusCode{
 	errors.ErrInvalidUsername: http.StatusBadRequest,
 	errors.ErrExistedUser:     http.StatusConflict,
 	ErrInvalidMethod:          http.StatusBadRequest,
+	errors.ErrFailedAuth:      http.StatusUnauthorized,
+	ErrInvalidToken:           http.StatusUnauthorized,
+	ErrDeletedSession:         http.StatusNoContent,
 }
 
 func RespondError(w http.ResponseWriter, err ErrorOrCode, msg ...string) {
@@ -237,7 +329,9 @@ func init() {
 
 	// Group Session
 	mux.HandleFunc(api+"/sessions/", HandlerMapper(HandlerMap{
-		"POST":   logInHandler,
+		"POST": logInHandler,
+	}))
+	mux.HandleFunc(api+"/session", HandlerMapper(HandlerMap{
 		"DELETE": logOutHandler,
 	}))
 
@@ -337,15 +431,4 @@ func apiTestHandler() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(j)
 	}
-}
-
-// ----------------------------------------------------------------
-// @@binly: new
-
-func QueryAccountByUsername(name entity.Username) (entity.UserInfo, error) {
-	if !name.Valid() {
-		return entity.UserInfo{}, errors.ErrInvalidUsername
-	}
-	uInfo, err := model.UserInfoService.FindByUsername(name)
-	return uInfo, err
 }
