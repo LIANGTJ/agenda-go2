@@ -3,8 +3,8 @@ package agendaHttp
 
 var(
 	protocol                      = "http://"
-	// host                          = "private-12576-agenda32.apiary-mock.com"
-	host						  = "127.0.0.1:8080"
+	host                          = "private-12576-agenda32.apiary-mock.com"
+	// host						  = "127.0.0.1:8080"
 	registerPath                  = "/v1/users/"
 	loginPath                     = "/v1/sessions/"
 	logoutPath                    = "/v1/session"

@@ -21,18 +21,13 @@ Usage:
   agenda [command]
 
 Available Commands and local flags:
-  add        -s startTime //create Meeting 
+  createM    -s startTime //create Meeting 
   			-e endTime 
   			-t title 
   			-p participator 
-  			
-  delete     -u           // delete user or meeting
-  			-m 			// note that -u & -m can't appear at the same time
-  			-t title         
+  			      
             
-  edit       -i           //edit meeting, invite a participator or delete participator
-  			-d 
-			-p participator 
+ 
   help        Help about any command
   
   login      -u username  //login 
@@ -45,7 +40,7 @@ Available Commands and local flags:
   			[-e] email
   			[-t] phone
   			
-  search     -u           //search users or meetings
+  query      -u           //search users or meetings
   			-m			// note that -u & -m can't appear at the same time
   			-s startTime
   			-e endTime
@@ -59,7 +54,6 @@ Root Flags:
       --viper                 Use Viper for configuration (default true)
 
 Use "agenda [command] --help" for more information about a command.
-
 ```
 ## 实现原理
 
@@ -81,113 +75,110 @@ Use "agenda [command] --help" for more information about a command.
 
 ## 样例
 
+启动服务器：
+
+```shell
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/service$ go run main.go 
+[info]2017/12/16 07:28:59 server.go:29: Listtening addr: :8080
+Listtening addr: :8080
+[error]2017/12/16 07:30:16 action.go:21: UNIQUE constraint failed: user_infos.name
+
+(UNIQUE constraint failed: user_infos.name) 
+[2017-12-16 07:30:16]  
+
+
+```
+
+
+
 register 
 
 ```shell
-$ ./agenda-go.exe register -u lyb -p 12345 -e lyb@gmail.com -t 2080290
+mock测试：
+PS E:\GoWorkSpace\src\github.com\LIANGTJ\agenda-go2\cli> .\main.exe register -u root -p 123
 register called
-register sucessfully!
+register successfully
+
+服务端：
+【200 response】
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main register -u ltj  -p 123 -e ltj@163.com -t 12345
+[info]2017/12/16 07:30:27 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
+register called
+[Register] Response:  
+register successfully ltj
+
+
+【非200 response】:
+
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main register
+[info]2017/12/16 07:29:30 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
+register called
+Error[registerd]： user regiestered invalid
+
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main register -u root -p 123 -e ltj@163.com -t 12345
+[info]2017/12/16 07:30:16 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
+register called
+Error[registerd]： the user has been existed
+
 
 ```
 
 login
 
 ```shell
-$ ./agenda-go.exe login -u lyb -p12345
-login called
-login called by lyb
-login with info password: 12345
-login sucessfully!
+mock测试：
+PS E:\GoWorkSpace\src\github.com\LIANGTJ\agenda-go2\cli> .\main.exe login -u root -p 123
+login called by root
+login with info password: 123
+Login Sucessfully root
 
+服务端测试：
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main login  -u ltj  -p 123
+[info]2017/12/16 07:35:32 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
+login called by ltj
+login with info password: 123
+[Login] Response:  
+Login Sucessfully ltj
 ```
 
+因为没多大意义，所以以下都不再展示mock测试
 
-
-search user
+query user
 
 ```shell
-$ ./agenda-go.exe search -u
-search called
-+-------+---------------+---------+
-| NAME  |     EMAIL     |  PHONE  |
-+-------+---------------+---------+
-| sky   |               |         |
-| lrd   |               |         |
-| lyb   | lyb@gmail.com | 2080290 |
-| binly | binly@git.com | 1234567 |
-+-------+---------------+---------+
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main query -u
+[info]2017/12/16 07:36:05 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
+query called
+[QueryAccountAll] Response:  
++--------+-------+-------+
+|  NAME  | EMAIL | PHONE |
++--------+-------+-------+
+| root   |       |       |
+| matrix |       |       |
+| ltj    |       | 12345 |
++--------+-------+-------+
 
 ```
 
 create meeting
 
 ```shell
-$ ./agenda-go.exe add -s "2011-01-01 10:00:34" -e "2011-01-02 08:00:34" -t MatrixShareMeeting -p lrd
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main createM -s "2011-01-01 10:00:34" -e "2011-01-02 08:00:34" -t MatrixShareMeeting -p lrd
 create Meeting called
 start: 2011-01-01 10:00:34 +0000 UTC end: 2011-01-02 08:00:34 +0000 UTC
 sucessfully create meeting
 ```
 
-search meeting
-
-```shell
-$ ./agenda-go.exe search -s "2011-01-01 10:00:34" -e "2011-01-02 08:00:34"
-search called
-+--------------------+---------+----------------------+----------------------+---------------+
-|       TITLE        | SPONSOR |      STARTTIME       |       ENDTIME        | PARTICIPATORS |
-+--------------------+---------+----------------------+----------------------+---------------+
-| MatrixShareMeeting | lyb     | 2011-01-01T10:00:34Z | 2011-01-02T08:00:34Z |  lyb          |
-+--------------------+---------+----------------------+----------------------+---------------+
-
-```
-
-add participator
-
-```shell
-$ ./agenda-go.exe edit -i -u sky -t MatrixShareMeeting
-edit called
-$ ./agenda-go.exe search -s "2011-01-01 10:00:34" -e "2011-01-02 08:00:34"
-search called
-+--------------------+---------+----------------------+----------------------+---------------+
-|       TITLE        | SPONSOR |      STARTTIME       |       ENDTIME        | PARTICIPATORS |
-+--------------------+---------+----------------------+----------------------+---------------+
-| MatrixShareMeeting | lyb     | 2011-01-01T10:00:34Z | 2011-01-02T08:00:34Z |  sky lyb      |
-+--------------------+---------+----------------------+----------------------+---------------+
-
-```
-
  logout
 
 ```shell
-$ ./agenda-go.exe logout
+liangtj@ubuntu:~/Desktop/GoWorkSpace/src/github.com/LIANGTJ/agenda-go2/cli$ ./main logout
+[info]2017/12/16 07:38:39 root.go:67: Can't read config: open ./.cobra.yaml: no such file or directory
 logout called
-logout sucessfully!
-
+logout sucessfully
 ```
 
-delete meeting
 
-```shell
-$ ./agenda-go.exe delete -m -t MatrixShareMeeting
-delete called
-$ ./agenda-go.exe search -s "2011-01-01 10:00:34" -e "2011-01-02 08:00:34"
-search called
-
-```
-
-delete current user
-
-```shell
-$ ./agenda-go.exe delete -u
-delete called
-CancelAccount successfully
-$ ./agenda-go.exe login -u lyb -p12345
-login called
-login called by lyb
-login with info password: 12345
-Error[login]： a nil user/*user is to be used
-
-```
 
 
 
