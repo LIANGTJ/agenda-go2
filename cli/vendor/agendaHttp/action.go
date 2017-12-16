@@ -11,20 +11,23 @@ import (
 	"io/ioutil"
 	"status"
 	"time"
+	"config"
+	// "io"
 	// "os"
 	
 )
 // ---------------------------- Cmd Function ---------------------------------------
 
 
-func Register(username, password, email, phone string) (*entity.User, error) {
+func Register(username, password, email, phone string) (*RegisterResBody, error) {
 	defer func(){
 		if err := recover(); err != nil {
 			log.Fatal(err)
 		}
 	}()
 	
-	user := entity.NewUser(username, password, email, phone)
+	// user := entity.NewUser(username, password, email, phone)
+	user := NewRegisterReqBody(username, password, email, phone)
 	if user.Invalid() {
 		err := errors.New("user regiestered invalid")
 		return nil, err
@@ -33,20 +36,25 @@ func Register(username, password, email, phone string) (*entity.User, error) {
 
 	resp, err := http.Post(RegisterURL(), "application/json", jsonData)
 	if err != nil {
+		fmt.Println("before")
 		panic(err)
 	}
 	if resp.Status[0] != '2' {
 		return nil,ErrorHandle(resp)
 	}
 	// whether in debug mode
-	actWhenInDebugMode(resp, "[Register]")
+	
 	defer resp.Body.Close() //一定要关闭resp.Body
 
-	var u entity.User
+	// var u 
+	var u RegisterResBody
 	err = json.NewDecoder(resp.Body).Decode(&u)
 	if err != nil {
+		fmt.Println("after")
 		panic(err)
 	}
+
+	actWhenInDebugMode(resp, "[Register]")
 	return &u, nil
 
 }
@@ -59,7 +67,7 @@ func Login(username, password string)  error {
 	}()
 
 	if status.UserExisted() {
-		return  errors.New("another curUser " + status.LoginedUser()+ " has logined")
+		return  errors.New("another curUser " + username + " has logined")
 	}
 
 	loginReqBody := NewLoginReqBody(username, password)
@@ -76,7 +84,9 @@ func Login(username, password string)  error {
 		return ErrorHandle(resp)
 	}
 	defer resp.Body.Close()
-	status.ChangeLoginedUser(username)
+	var body LoginResBody
+	json.NewDecoder(resp.Body).Decode(&body)
+	status.ChangeLoginedToken(body.Token)
 
 	actWhenInDebugMode(resp, "[Login]")
 	
@@ -96,7 +106,10 @@ func Logout() error {
 		return errors.New("User Existed")
 	}
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodDelete, LogoutURL(), nil)
+	data := NewLogoutReqBody(status.LoginedToken())
+	jsonData := ToJson(*data)
+	
+	req, err := http.NewRequest(http.MethodDelete, LogoutURL(), jsonData)
 	if err != nil {
 		panic(err)
 	}
@@ -108,22 +121,30 @@ func Logout() error {
 	if resp.Status[0] != '2' {
 		ErrorHandle(resp)
 	} else {
-		status.ChangeLoginedUser("")
+		status.ChangeLoginedToken("")
 	}
 
-	actWhenInDebugMode(resp, "[Logout]")
+	// actWhenInDebugMode(resp, "[Logout]")
 	return err
 	
 }
 
-func QueryAccountAll() (*queryUserList, error) {
+func QueryAccountAll() (*QueryAccountAllResBody, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatal(err)
 		}
 	}()
 	
-	resp, err := http.Get(QueryAccountAllURL())
+	client := &http.Client{}
+	data := NewQueryAccountAllReqBody(status.LoginedToken())
+	jsonData := ToJson(data)
+	req, err := http.NewRequest(http.MethodGet, QueryAccountAllURL(), jsonData)
+	// resp, err := http.Get(QueryAccountAllURL())
+	if err != nil {
+		panic(err)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
@@ -132,7 +153,7 @@ func QueryAccountAll() (*queryUserList, error) {
 	}
 	defer resp.Body.Close()
 
-	var userlist queryUserList
+	var userlist QueryAccountAllResBody
 
 	err = json.NewDecoder(resp.Body).Decode(&userlist)
 	if err != nil {
@@ -186,22 +207,30 @@ func ToJson(v interface{}) *bytes.Buffer {
 	return buf
 }
 
-func ErrorHandle(res *http.Response) error {
-	if(res.Status[0] != 2) {
+func ErrorHandle(resp *http.Response) error {
+	if(resp.Status[0] != 2) {
 
-		var body ErrorResponseBody
-		err := json.NewDecoder(res.Body).Decode(&body)
+		// var body ErrorResponseBody
+		// err := json.NewDecoder(res.Body).Decode(&body)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// return errors.New(body.msg)
+		// var msg = make([]byte,0,0)
+		// io.ReadFull(res.Body,msg)
+		msg, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
-		return errors.New(body.msg)
+		return errors.New(string(msg))
+
 	}
 	return nil
 
 }
 
 func actWhenInDebugMode(resp *http.Response, cmd string) {
-	if status.DeBugMode() {
+	if config.DeBugMode() {
 		data, _ := ioutil.ReadAll(resp.Body)
 		// ...已经没多大作用了，毕竟前面resp都被decode了
 		fmt.Println(cmd + " Response: ", string(data))

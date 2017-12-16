@@ -8,14 +8,33 @@ import (
 	log "util/logger"
 )
 
-var loginedUser = ""
-var debugMode = true
+// var loginedUser = ""
+var loginedToken = ""
 
-func DeBugMode() bool { return debugMode }
-func UserExisted() bool { return loginedUser != "" }
 
-func LoginedUser() string { return loginedUser }
-func ChangeLoginedUser(user string) { loginedUser = user }
+func UserExisted() bool { 
+	// return loginedUser != "" 
+	return loginedToken != ""
+	
+}
+
+
+
+// func LoginedUser() string { 
+	// return loginedUser 
+
+// }
+
+func LoginedToken() string{
+	return loginedToken
+}
+// func ChangeLoginedUser(user string) { 
+// 	loginedUser = user 
+// }
+
+func ChangeLoginedToken(token string) {
+	loginedToken = token
+}
 
 func LoadLoginStatus()  {
 	buf, err := ioutil.ReadFile(config.UserLoginedStatusPath())
@@ -24,7 +43,8 @@ func LoadLoginStatus()  {
 	if err != nil {
 		log.Fatal(err)
 	}
-	loginedUser = string(buf)
+	// loginedUser = string(buf)
+	loginedToken = string(buf)
 	// fin.Read()
 	// return errors.ErrNeedImplement
 }
@@ -35,6 +55,7 @@ func SaveLoginStatus()  {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fout.WriteString(loginedUser)
+	// fout.WriteString(loginedUser)
+	fout.WriteString(loginedToken)
 
 }

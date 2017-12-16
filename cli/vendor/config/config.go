@@ -6,6 +6,12 @@ import (
     "time"
 )
 
+
+var debugMode = true
+
+func DeBugMode() bool { 
+    return debugMode 
+}
 var logToConsoleMode = true
 
 func LogToConsoleMode() bool { return logToConsoleMode }
@@ -32,7 +38,7 @@ func WorkingDir() string {
 }
 
 func UserLoginedStatusPath() string {
-    return WorkingDir() + "/curUser.txt"
+    return WorkingDir() + "/curToken.txt"
 }
 
 func LogPath() string {

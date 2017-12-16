@@ -17,7 +17,7 @@ package cmd
 import (
 	"agendaHttp"
 	"fmt"
-	"status"
+	// "status"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -45,7 +45,7 @@ var createMCmd = &cobra.Command{
 		startTime, _ := time.Parse("2006-01-02 15:04:05", startTimeFlag)
 		endTime, _ := time.Parse("2006-01-02 15:04:05", endTimeFlag)
 		participators := make([]string, 0, 0)
-		participators = append(participators, status.LoginedUser())
+		// participators = append(participators, status.LoginedUser())
 		for _, participator := range participatorsFlag {
 			participators = append(participators, participator)
 		}

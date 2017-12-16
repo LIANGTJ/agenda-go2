@@ -8,15 +8,25 @@ import (
 	"entity"
 )
 
-type ErrorResponseBody struct {
-	msg string
+type withTokenBody struct {
+	Token string `json:"token"`
 }
+
+
+// type ErrorResponseBody struct {
+// 	msg string
+// }
 
 type LoginReqBody struct {
 
-	Username string
-	Password string
+	Username string	`json:"username"`
+	Password string	`json:"password"`
 }
+
+type LoginResBody struct {
+	withTokenBody
+}
+
 
 func NewLoginReqBody(username, password string) *LoginReqBody {
 	data := LoginReqBody {
@@ -30,13 +40,62 @@ func (L * LoginReqBody) Invalid() bool {
 	return L.Username == "" || L.Password == ""
 }
 
-type QueryAccountAllResBody struct {
-	users queryUserList
-	
+type LogoutReqBody struct {
+	withTokenBody
 }
 
-type queryUserList []struct {
-	Id string
+func NewLogoutReqBody(token string) *LogoutReqBody{
+	return &LogoutReqBody{
+		withTokenBody{
+			token,
+		},
+	}
+}
+
+// type QueryAccountAllResBody struct {
+	// users queryUserList
+	// users
+	
+// }
+
+type QueryAccountAllReqBody struct {
+	withTokenBody
+}
+
+func NewQueryAccountAllReqBody(token string) *QueryAccountAllReqBody{
+	return &QueryAccountAllReqBody{
+		withTokenBody{
+			token,
+		},
+		
+	}
+}
+
+
+type QueryAccountAllResBody []struct {
+	entity.User
+}
+
+type RegisterReq struct {
+	entity.User
+}
+
+func NewRegisterReqBody(username, password, email, phone string) *RegisterReq {
+	return &RegisterReq{
+		entity.User{
+			username,
+			password,
+			email,
+			phone,
+		},
+	}
+}
+
+func (r *RegisterReq) Invalid() bool{
+	return r.User.Invalid()
+}
+
+type RegisterResBody struct {
 	entity.User
 }
 

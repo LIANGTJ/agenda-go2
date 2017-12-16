@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Binly42/agenda-go2.svg?branch=master)](https://travis-ci.org/Binly42/agenda-go2)
+[![codecov](https://codecov.io/gh/LIANGTJ/agenda-go2/branch/master/graph/badge.svg)](https://codecov.io/gh/LIANGTJ/agenda-go2)
 
 ## 简介
 

@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"agendaHttp"
 	// "log"
-	"status"
+	// "status"
 	
 )
 
@@ -50,7 +50,7 @@ var loginCmd = &cobra.Command{
 			panic(err)
 		}
 		
-		fmt.Println("Login Sucessfully", status.LoginedUser())
+		fmt.Println("Login Sucessfully",username)
 
 		
 
