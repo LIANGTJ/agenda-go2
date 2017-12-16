@@ -1,0 +1,97 @@
+----------------------------------------------------------------
+共 5个命令...
+
+只列出各请求所期待的状态码, 及其对应的响应的格式 (这里只用 body),
+若响应的状态码与预期不符, 则响应均为 (text/plain) 格式, 描述错误信息
+
+
+----------------------------------------------------------------
+Log in:
+
+    '/v1/sessions/' [POST]
+
+    + Request
+        + Body: (application/json) {
+                    "username" (string, required)
+                    "password" (string, required)
+                }
+
+    + Response
+        + Body => 200: (application/json) {
+                            "token" (string, required)
+                       }
+
+
+----------------------------------------------------------------
+Log out:
+
+    '/v1/session' [DELETE]
+
+    + Request
+        + Body: (application/json) {
+                    "token" (string, required)
+                }
+
+    + Response
+        + Body => 204:  (empty)
+
+
+----------------------------------------------------------------
+Get User by identifier(Username):
+
+    '/v1/user/{identifier}' [GET]
+
+    + Request
+        + Body: (application/json) {
+                    "token" (string, required)
+                }
+
+    + Response
+        + Body => 200: (application/json) {
+                           "username" (string, required)
+                           "email" (string, required)
+                           "phone" (string, required)
+                       }
+
+
+----------------------------------------------------------------
+Get all Users:
+
+    '/v1/users/' [GET]
+
+    + Request
+        + Body: (application/json) {
+                    "token" (string, required)
+                }
+
+    + Response
+        + Body => 200: (application/json) [
+                            {
+                                "username" (string, required)
+                                "email" (string, required)
+                                "phone" (string, required)
+                            },
+                            ...
+                        ]
+
+
+----------------------------------------------------------------
+Register a User:
+
+    '/v1/users/' [POST]
+
+    + Request
+        + Body: (application/json) {
+                        "username" (string, required)
+                        "password" (string, required)
+                        "email" (string, required)
+                        "phone" (string, required)
+                }
+
+    + Response
+        + Body => 201: (application/json) {
+                            "username" (string, required)
+                            "email" (string, required)
+                            "phone" (string, required)
+                        }
+
