@@ -2,6 +2,8 @@ package agendaerror
 
 import "errors"
 
+var New = errors.New
+
 var (
 	ErrNeedImplement = errors.New("this function need to be implemented")
 

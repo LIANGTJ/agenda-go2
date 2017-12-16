@@ -11,20 +11,19 @@ Agenda is a simple API allowing consumers to schedule meeting on-line.
 
 ## User (object)
 
-+ Identifier (string)
-+ Username
-+ Password (string)
-+ Email (string)
-+ Phone (string)
++ identifier (string) - Username
++ password (string)
++ email (string)
++ phone (string)
 
 
 ## Meeting (object)
 
-+ Identifier (string)
-+ Sponsor (Username)
-+ Participator (array[Username])
-+ Starttime (string)
-+ Endtime (string)
++ identifier (string) - MeetingTitle
++ sponsor (Username)
++ participator (array[Username])
++ starttime (string)
++ endtime (string)
 
 
 
@@ -32,32 +31,34 @@ Agenda is a simple API allowing consumers to schedule meeting on-line.
 
 Resource operations related to a session in the API.
 
-## Session [/v1/session]
+## Sessions [/v1/sessions/]
 
 ### Login [POST]
 
 Login for a new session, in general as a registered user.
 
 + Request (application/json)
-        
+
     + Attributes
-    
-        + Username: `zhang3` (string, required)
-        + Password: `abc123` (string, required)
-        
+
+        + username: `zhang3` (string, required)
+        + password: `abc123` (string, required)
+
 
 + Response 200 (application/json)
-    + Headers
-    
-            Set-Cookies: `zhang3_cookies=zhang3`
-    
+    <!--+ Headers-->
+
+    <!--         Set-Cookies: `zhang3_cookies=zhang3` -->
+
     + Body
 
             {
-                "access-token": "abcdefg",
-              
+                "error": "",
+                "content": "abcdefg" - Token
             }
 
+
+## Session [/v1/session]
 
 ### Logout [DELETE]
 
@@ -65,10 +66,14 @@ Logout for a session, in general as a registered user.
 
 + Request
 
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
+    <!--+ Headers-->
 
+    <!--         Cookies: `zhang3_cookies=zhang3` -->
+    + Body
+
+            {
+                "token": "abcdefg"
+            }
 
 + Response 204
 
@@ -78,73 +83,45 @@ Logout for a session, in general as a registered user.
 
 Resource operations related to a user in the API.
 
-## User-Key [/v1/user/getkey{?Username,Password}]
+## User [/v1/user/{identifier}]
 
 + Parameters
-    - Username : `root` (string, required) - User Name
-    - Password : `pass` (required)
-
-### Get User Key [GET]
-
-get a security key for operations later
-
-+ Request
-
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
-
-+ Response 200 (application/json)
-
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
-    
-    + Body
-            
-            {
-                "key":"1e3576bt",
-            }
-
-
-## User [/v1/user/{Identifier}]
-
-+ Parameters
-    - Identifier : `1` (string, required) - User Identifier
+    - identifier : `n1` (string, required) - Username
 
 ### Get User by ID [GET]
+
 + Request
 
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
+    <!--+ Headers-->
 
+    <!--        Cookies: `zhang3_cookies=zhang3`-->
+    + Body
+
+            {
+                "token": "abcdefg"
+            }
 
 + Response 200 (application/json)
 
-        {
-            "Id" : 1,
-            "Username":"zhang3",
-            "Password":"zhang",
-            "Email":"zhang3@mail2.sysu.edu.cn"
-        }
+            {
+                "error": "",
+                "content": {
+                    "username":"zhang3",
+                    "email":"zhang3@mail2.sysu.edu.cn",
+                    "phone":"120"
+                }
+            }
 
 ### Delete User by ID [DELETE]
-
-+ Request
-
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
 
 + Response 204
 
 
-## User's Meetings [/v1/user/{Identifier}/meetings{?Filter}]
+## User's Meetings [/v1/user/{identifier}/meetings{?filter}]
 
 + Parameters
-    - Identifier : `1` (string, required) - User Identifier
-    - Filter : `sponsored` (string, optional) - filtership between the requested Meetings and the User
+    - identifier : `1` (string, required) - User identifier
+    - filter : `sponsored` (string, optional) - filtership between the requested Meetings and the User
         - Default : `all`
         - Members
             - `all`
@@ -157,35 +134,38 @@ List the Meetings matching the `filter` for the User.
 + Request
 
     + Headers
-        
+
             Cookies: `zhang3_cookies=zhang3`
 
 + Response 200 (application/json)
-    
+
     + Headers
-        
+
             Set-Cookies: `zhang3_cookies=zhang3`
 
     + Body
 
-            [
-                {
-                    "Title":"iso900",
-                    "Participators": [
-                        "zhang3",
-                        "somebody",
-                    ],
-                    "Start-time":"2015-08-05T08:40:51.620Z",
-                    "End-time":"2015-10-05T08:40:51.620Z",
-                }
-            ]
+            {
+                "error": "",
+                "content": [
+                    {
+                        "title":"iso900",
+                        "participators": [
+                            "zhang3",
+                            "somebody",
+                        ],
+                        "start-time":"2015-08-05T08:40:51.620Z",
+                        "end-time":"2015-10-05T08:40:51.620Z",
+                    }
+                ]
+            }
 
 ### Delete those filtered Meetings [DELETE]
 
 + Response 204
-    
+
      + Headers
-        
+
             Set-Cookies: `zhang3_cookies=zhang3`
 
 
@@ -194,59 +174,57 @@ List the Meetings matching the `filter` for the User.
 
 Resources related to a users in the API.
 
-## Users Collection [/v1/users]
+## Users Collection [/v1/users/]
 
 ### List all Users [GET]
-    
-    
-     + Headers
-            
-            Cookies: `zhang3_cookies=zhang3`
-            
 
-+ Response 200 (application/json)
-
-    + Headers
-        
-            Set-Cookies: `zhang3_cookies=zhang3`
++ Request (application/json)
 
     + Body
 
-            [
-              {
-                "Id": "1",
-                "Username": "zhang3",
-                "Password": "zhang",
-                "Email": "zhang3@mail2.sysu.edu.cn",
-                "Phone": "12345678"
-              },
-              {
-                "Id": "2",
-                "Username": "li4",
-                "Password": "li",
-                "Email": "li4@mail2.sysu.edu.cn",
-                "Phone": "18520280295"
-              }
-            ]
+            {
+                "token": "asdfasd"
+            }
+
++ Response 200 (application/json)
+
+    <!-- + Headers -->
+
+    <!--        Set-Cookies: `zhang3_cookies=zhang3` -->
+
+    + Body
+
+            {
+                "error": "",
+                "content": [
+                    {
+                        "username": "zhang3",
+                        "email": "zhang3@mail2.sysu.edu.cn",
+                        "phone": "12345678"
+                    },
+                    {
+                        "username": "li4",
+                        "email": "li4@mail2.sysu.edu.cn",
+                        "phone": "18520280295"
+                    }
+                ]
+            }
 
 ### Register, Create a New User [POST]
 
 + Request (application/json)
 
-
     + Attributes
-            + Username (string, required)
-            + Password (string, required)
+            + username (string, required)
+            + password (string, required)
 
-    + Headers
-        
-            Cookies: `zhang3_cookies=zhang3`
     + Body
 
             {
                 "Username":"zhang3",
                 "Password":"zhang",
-                "Email":"zhang3@mail2.sysu.edu.cn"
+                "Email":"zhang3@mail2.sysu.edu.cn",
+                "phone": "12345678"
             }
 
 + Response 201 (application/json)
@@ -261,31 +239,33 @@ Resources related to a users in the API.
     + Body
 
             {
-                "Id": 1,
-                "Username":"zhang3",
-                "Password":"zhang",
-                "Email":"zhang3@mail2.sysu.edu.cn"
+                "error": "",
+                "content": {
+                    "username":"zhang3",
+                    "email":"zhang3@mail2.sysu.edu.cn",
+                    "phone":"120"
+                }
             }
 
 
 
 # Group Meeting
 
-## Meeting [/v1/meeting/{Identifier}]
+## Meeting [/v1/meeting/{identifier}]
 
 + Parameters
-    - Identifier : `1` (string, required) - Meeting Identifier
+    - identifier : `1` (string, required) - Meeting identifier
 
 ### Get Meeting by ID [GET]
 
 + Response 200 (application/json)
 
     + Headers
-    
+
             Set-Cookies: `zhang3_cookies=zhang3`
-            
+
     + Body
-    
+
 
             {
                 "Title":"iso900",
@@ -301,7 +281,7 @@ Resources related to a users in the API.
 
 + Request
     + Headers
-    
+
             Cookies: `zhang3_cookies=zhang3`
 
 + Response 204
@@ -316,10 +296,10 @@ Resources related to a users in the API.
 
 + Request (application/json)
     + Headers
-    
+
             Set-Cookies: `zhang3_cookies=zhang3`
     + Body
-    
+
             {
                 "op": "remove",
                 "from": "/Participators",
@@ -340,17 +320,17 @@ Resources related to a users in the API.
 ### List the Meetings in given time interval [GET]
 + Request
     + Headers
-    
+
             Cookies: `zhang3_cookies`
-            
+
 
 + Response 200 (application/json)
     + Headers
-    
+
             Set-Cookies: `zhang3_cookies`
-            
+
     + Body
-    
+
 
             [
                 {
@@ -371,9 +351,9 @@ create a meeting
 
 + Request (application/json)
     + Headers
-    
+
             Cookies: `zhang3_cookies`
-            
+
     + Body
 
             {

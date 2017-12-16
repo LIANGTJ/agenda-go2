@@ -23,13 +23,13 @@ func backupOldFiles() {
 // Load : load all resources for agenda.
 func Load() {
 	loadConfig()
-	loadAllRegisteredUser()
+	loadAllUser()
 	loadAllMeeting()
 }
 
 // Save : Save all data for agenda.
 func Save() error {
-	if err := saveAllRegisteredUser(); err != nil {
+	if err := saveAllUser(); err != nil {
 		agendaLogger.Println(err.Error())
 		return err
 	}
@@ -69,7 +69,7 @@ func saveConfig() error {
 	return config.Save(encoder)
 }
 
-func loadAllRegisteredUser() {
+func loadAllUser() {
 	fin, err := os.Open(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)
@@ -84,7 +84,7 @@ func loadAllRegisteredUser() {
 	decoder := json.NewDecoder(fin)
 	entity.LoadUsersAllRegistered(decoder)
 }
-func saveAllRegisteredUser() error {
+func saveAllUser() error {
 	fout, err := os.Create(config.UserDataRegisteredPath())
 	if err != nil {
 		log.Fatal(err)

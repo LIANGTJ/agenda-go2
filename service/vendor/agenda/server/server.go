@@ -1,4 +1,4 @@
-package agenda
+package server
 
 import (
 	// errors "convention/cloudgoerror"

@@ -1,12 +1,13 @@
-[![](https://travis-ci.org/LIANGTJ/agenda-go2.svg?branch=master)](https://travis-ci.org/LIANGTJ/agenda-go2)
+[![Build Status](https://travis-ci.org/Binly42/agenda-go2.svg?branch=master)](https://travis-ci.org/Binly42/agenda-go2)
+
 ## 简介
 
- agenda是会议管理的命令行程序，由go语言实现。
+ agenda-go2 是在 [agenda-go](https://github.com/Binly42/agenda-go) 的基础上继续开发作业的, 对应 pml老师 的 [这篇博客](http://blog.csdn.net/pmlpml/article/details/78727210) 及 `ex-service-agenda.html`(*服务程序开发实战 - Agenda*) 。
 
-## 安装
+## 下载
 
 ```shell
-go get -u github.com/Binly42/agenda-go
+go get -u github.com/Binly42/agenda-go2
 ```
 
 
