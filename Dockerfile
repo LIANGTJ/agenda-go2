@@ -1,7 +1,7 @@
 FROM golang:1.9
 
-# ENV http_proxy "socks5://HOST:PORT"
-# ENV https_proxy "socks5://HOST:PORT"
+ENV http_proxy "socks5://127.0.0.1:1080"
+ENV https_proxy "socks5://127.0.0.1:1080"
 
 
 COPY . "$GOPATH/src/github.com/Binly42/agenda-go2"
@@ -16,4 +16,4 @@ RUN go install "./service"
 
 EXPOSE 8080
 
-VOLUME ["/service/.agenda.d"]
+VOLUME ["/service/.agenda.d"]       
