@@ -1,7 +1,7 @@
 FROM golang:1.9
 
-ENV http_proxy "socks5://127.0.0.1:1080"
-ENV https_proxy "socks5://127.0.0.1:1080"
+# ENV http_proxy "socks5://127.0.0.1:1080"
+# ENV https_proxy "socks5://127.0.0.1:1080"
 
 
 COPY . "$GOPATH/src/github.com/Binly42/agenda-go2"
